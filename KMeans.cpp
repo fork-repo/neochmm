@@ -1,6 +1,7 @@
 #include "KMeans.h"
 #include <string.h>
 #include <assert.h>  
+#include <Math.h>
 KMeans::KMeans(int dimensionNumber, int clusterNumber)
 {
 	m_clusterNumber = clusterNumber;
@@ -20,6 +21,15 @@ KMeans::~KMeans()
 	}
 	delete[] m_means;
 }
+double KMeans::Distance(const double* v1, const double* v2, int dimensionNumber)
+{
+	double distance = 0;
+	for (int d = 0; d < dimensionNumber; d++)
+	{
+		distance += (v1[d] - v2[d]) * (v1[d] - v2[d]);
+	}
+	return sqrt(distance);
+}
 void KMeans::Cluster(double *data, int size, int *Label)
 {
 	assert(size >= m_clusterNumber);
@@ -34,7 +44,17 @@ void KMeans::Cluster(double *data, int size, int *Label)
 		memcpy(m_means[i], sample, sizeof(double) * m_dimensionNumber);
 	}
 	bool loop = true;
+	double* v_data = new double[m_dimensionNumber];
+	int v_label = -1;
+	double cost = 0.0;
+
 	while (loop){
 		loop=false;
+		for (int i = 0; i < size; i++){
+				for(int j = 0; j < m_dimensionNumber; j++){
+					v_data[j] = data[i*m_dimensionNumber+j];
+				}
+				//cost
+		}
 	}
 }
