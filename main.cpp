@@ -1,4 +1,5 @@
 //#pragma once
+//
 #include <fstream>
 #include <iostream>
 #include <stdio.h>
@@ -22,12 +23,17 @@ int main(int argc, char** argv)
         10.1, 10.6, 10.7,
         11.3, 10.2, 10.9
     };
-
     int* labels = new int[10];
     //WIN *pwin = new WIN();
-    KMeans *pkmeans = new KMeans(3,4);
+    KMeans *pkmeans = new KMeans(3,5,0.01);
     pkmeans->Cluster(data,10,labels);
+    pkmeans->PrintMeans();
+    //
+    printf("label:\n\t");
+    for (int i=0;i<10;i++){
+          printf("%d ",labels[i]);
+    }
 	//GMM *pgmm = new GMM(3,2);
 	//pgmm->PrintGMM();
-	printf("end\n");
+	printf("\nend\n");
 }

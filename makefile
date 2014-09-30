@@ -1,12 +1,14 @@
+SHELL=cmd.exe
 CC = gcc
 CPPC = g++
 INCLUDE = .
 CFLAGS =
-LDFLAG = -lm
-OBJ = main.o gmm.o win.o kmeans.o
-TARGET = main
+LDFLAG = -lm -lKMeans
+OBJ = main.o gmm.o win.o 
+LIB = libKMeans.a
+TARGET = main.exe
 
-all: $(OBJ)
+all: $(OBJ) $(LIB)
 	$(CPPC) -o $(TARGET) $(OBJ) -L. $(LDFLAG) 
 
 %.o: %.c
@@ -25,5 +27,6 @@ all: $(OBJ)
 clean:
 	del /Q $(TARGET)
 	del /Q $(OBJ)
+	del /Q $(LIB)
 run:
 	./$(TARGET)
