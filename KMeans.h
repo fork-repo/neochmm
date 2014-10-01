@@ -7,6 +7,7 @@ public:
 	void Cluster(double*, int, int*);
 	double PredictLabel(double* v1, int* ppredict_label);
 	void PrintMeans();
+	double* GetMean(int index)	{ return m_means[index]; }
 private:
 	int m_clusterNumber; 
 	int m_dimensionNumber; 
