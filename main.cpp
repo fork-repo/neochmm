@@ -8,6 +8,8 @@
 #include "gmm.h"
 #include "win.h"
 #include "kmeans.h"
+#include "chmm.h"
+
 using namespace std;
 
 int main(int argc, char** argv)
@@ -39,6 +41,9 @@ int main(int argc, char** argv)
     read_gmm_file>>*p_readgmm;
     read_gmm_file.close();
     p_readgmm->PrintGMM();
+    printf("\n---chmm---\n");
+    CHMM *pchmm = new CHMM(10,3,5);
+    pchmm->Init("neo.txt");
     printf("\nend\n");
     return 0;
 }
