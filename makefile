@@ -3,21 +3,21 @@ CC = gcc
 CPPC = g++
 INCLUDE = .
 CFLAGS =
-LDFLAG = -lm -lKMeans
-OBJ = main.o gmm.o win.o 
-LIB = libKMeans.a
+OBJ = main.o 
+LDFLAG = -lm -lgmm -lKMeans
+LIB = libKMeans.a libgmm.a
 TARGET = main.exe
 
 all: $(OBJ) $(LIB)
-	$(CPPC) -o $(TARGET) $(OBJ) -L. $(LDFLAG) 
+	$(CPPC) -o $(TARGET) $(OBJ) -L. $(LDFLAG)
 
 %.o: %.c
 	echo *** [GCC] $@ : $<
-	$(CC) -c -o $@ $< $(CFLAGS) -I $(INCLUDE) 
+	$(CC) -c -o $@ $< $(CFLAGS) -I $(INCLUDE)  
 
 %.o: %.cpp
 	echo *** [G++] $@ : $<
-	$(CPPC) -c -o $@ $< $(CFLAGS) -I $(INCLUDE) 
+	$(CPPC) -c -o $@ $< $(CFLAGS) -I $(INCLUDE)  
 
 %.a: %.o
 	echo *** [AR] $@ : $<
@@ -26,7 +26,7 @@ all: $(OBJ) $(LIB)
 .PHONY: clean
 clean:
 	del /Q $(TARGET)
-	del /Q $(OBJ)
 	del /Q $(LIB)
+	del /Q $(OBJ)
 run:
 	./$(TARGET)

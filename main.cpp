@@ -4,6 +4,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>  
 #include "gmm.h"
 #include "win.h"
 #include "kmeans.h"
@@ -24,22 +25,20 @@ int main(int argc, char** argv)
         11.3, 10.2, 10.9
     };
 
-    //int* labels = new int[10];
-    //WIN *pwin = new WIN();
-    //KMeans *pkmeans = new KMeans(3,5,0.01);
-    //pkmeans->Cluster(data,10,labels);
-    //pkmeans->PrintMeans();
-    //
-    //printf("label:\n\t");
-    //for (int i=0;i<10;i++){
-    //      printf("%d ",labels[i]);
-    //}
-
 	GMM *pgmm = new GMM(3,5);
-	  pgmm->TrainSingleGaussianDistribution(data,10); //Training GMM
-    
-    //gmm->GetProbability(test_data[i])
-	pgmm->PrintGMM();
-    
+	pgmm->Train(data,10,0.00001); //Training GMM
+    ofstream gmm_file("gmm.txt");
+    assert(gmm_file);
+    gmm_file<<*pgmm;
+    gmm_file.close();
+    delete pgmm;
+
+    GMM *p_readgmm = new GMM();
+    ifstream read_gmm_file("gmm.txt");
+    assert(read_gmm_file);
+    read_gmm_file>>*p_readgmm;
+    read_gmm_file.close();
+    p_readgmm->PrintGMM();
     printf("\nend\n");
+    return 0;
 }
