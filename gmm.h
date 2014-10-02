@@ -10,6 +10,7 @@ public:
 	void PrintGMM();
 	double GetProbability(const double*);
 	void Train(double *, int, double);
+	void Train(const char*,double);
 	friend std::ostream& operator<<(std::ostream& out, GMM& gmm);
 	friend std::istream& operator>>(std::istream& in, GMM& gmm);
 

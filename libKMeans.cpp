@@ -102,14 +102,14 @@ void KMeans::Cluster(double *data, int size, int *Label)
 			}
 		}
 		//terminal conditcon
-		if (fabs(lastCost - cost) < m_endCondition * lastCost){
+		if (fabs(lastCost - cost) <= m_endCondition * lastCost){
 			unchanged++;
 			if (unchanged > 3){
 				loop = false;
 			}
 		}
 		lastCost = cost;
-		//printf("lastCost - cost=%lf, %lf\n",lastCost - cost,m_endCondition * lastCost);
+		//printf("KMeans (lastCost - cost)=%lf, %lf\n",lastCost - cost,m_endCondition * lastCost);
 	}
 	//output Label
 	for (int i = 0; i < size; i++)

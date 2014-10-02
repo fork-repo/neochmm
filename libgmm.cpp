@@ -111,14 +111,17 @@ double GMM::CalNormalProbability(const double* v, int index)
 
 void GMM::Train(double *data, int size, double endCondition)
 {
+	//printf("Start GMM Train\n");
 	//init 初始化m_priors[], m_means[], m_variances[]
 	const double MIN_VAR = 1E-10;
 	//利用kmans由data求出m_means[]
 	KMeans* kmeans = new KMeans(m_dimensionNumber, m_mixtureNumber, 0.01);
 	int *Label;
 	Label=new int[size];
+	//printf("Start KMeans Cluster\n");
 	kmeans->Cluster(data,size,Label);
 	//
+	//printf("Finish KMeans Cluster\n");
 	int* cluster_sizes = new int[m_mixtureNumber];
 	double* overallMeans = new double[m_dimensionNumber];
 	double* overallMinVariances = new double[m_dimensionNumber];
@@ -200,7 +203,7 @@ void GMM::Train(double *data, int size, double endCondition)
 		new_means[i] = new double[m_dimensionNumber];
 		new_variances[i] = new double[m_dimensionNumber];
 	}
-
+	//printf("enter GMM train while loop\n");
 	while (loop)
 	{
 		//清除上次計算的值
@@ -253,13 +256,13 @@ void GMM::Train(double *data, int size, double endCondition)
 			}
 		}
 		//terminal conditcon
-		if (fabs(lastCost - cost) < endCondition * fabs(lastCost)){
+		if (fabs(lastCost - cost) <= endCondition * fabs(lastCost)){
 			unchanged++;
 			if (unchanged > 3){
 				loop = false;
 			}
 		}
-		//printf("(%0.2f,%0.2f,%0.2f)\n", lastCost,cost,fabs(lastCost - cost));
+		//printf("GMM(%0.2f,%0.2f,%0.2f[lastCost-cost])\n", lastCost,cost,fabs(lastCost - cost));
 		lastCost = cost;
 	}
 	delete[] overallMeans;
@@ -273,6 +276,36 @@ void GMM::Train(double *data, int size, double endCondition)
 	delete[] new_means;
 	delete[] new_variances;
 	delete[] v;
+}
+
+void GMM::Train(const char* fileName,double endCondition)
+{
+	ifstream sampleFile(fileName, ios_base::binary);
+	assert(sampleFile);
+	int sequence_size = 0;
+	int dimensionNumber = 0;
+	sampleFile.read((char*)&sequence_size, sizeof(int));
+	//printf("sequence_size=%d\n",sequence_size);
+	//gcount()以2bytes為單位ffff, int以4bytes為單位ffff ffff
+	//printf("c=%d\n",sampleFile.gcount());
+	sampleFile.read((char*)&dimensionNumber, sizeof(int));
+	//printf("dimensionNumber=%d\n",dimensionNumber);
+	
+	double* data = new double[sequence_size*dimensionNumber];
+	
+	//printf("\ndata:\n");
+	for (int i = 0; i < sequence_size; i++){
+		//double* v = new double[dimensionNumber];
+		sampleFile.read((char*)&data[i*dimensionNumber], sizeof(double) * dimensionNumber);
+		//-------------
+		//for (int j = 0; j < dimensionNumber; j++){
+		//	printf("%lf ",data[i*dimensionNumber+j]);
+		//}
+		//printf("\n");
+		//-------------
+	}
+	sampleFile.close();
+	this->Train(data, sequence_size, endCondition);
 }
 
 //定義'<<'運算子 out << gmm
