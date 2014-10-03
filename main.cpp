@@ -65,8 +65,19 @@ int main(int argc, char** argv)
    */
     //GMM的Mixture 數量不得高於train的data數量?
     CHMM *pchmm = new CHMM(5,3,2);
+    pchmm->Train("data.seq");
+    /*
     pchmm->ReadDataBinaryToInitGMMs("data.seq");
     pchmm->Train("data.seq");
+    SAMPLES* pSamples = pchmm->ReadDataBinary("data.seq");
+    printf("\n");
+    for (int i = 0; i < pSamples->sample_size; i++){
+        for (int j = 0; j < pSamples->sample_dimension; j++){
+            printf("%lf ", pSamples->data[(i*pSamples->sample_dimension)+j]);
+        }
+        printf("\n");
+    }
+    */
    // printf("\nend\n");
     return 0;
 }

@@ -16,7 +16,61 @@ istream& operator>>(istream& in, CHMM& chmm)
 }
 void CHMM::Train(const char* fileName)
 {
-
+	//ifstream sampleFile(fileName, ios_base::binary);
+	//assert(sampleFile);
+	//sampleFile.close();
+	ReadDataBinaryToInitGMMs(fileName);	
+	SAMPLES* pSamples = ReadDataBinary(fileName);
+	bool loop = true;
+	int unchanged = 0;
+	double cost = 0;
+	double lastCost = 0;
+	while (loop)
+	{
+		lastCost = cost;
+		cost = 0;
+		for (int i = 0; i < size; i++)
+		{
+			cost += LogProb(Decode(seq, state));
+		}
+		cost /= size;
+		//
+		unchanged = (cost - lastCost < m_endError * fabs(lastCost)) ? (unchanged + 1) : 0;
+		if ( unchanged >= 3)
+		{
+			loop = false;
+		}
+	}
+}
+//<sequence_size_M><dimension_N><data_11><data_12>...<data_1N><data_21>...<data_MN>
+SAMPLES* CHMM::ReadDataBinary(const char* fileName)
+{
+	SAMPLES* pSamples = new SAMPLES();
+	ifstream sampleFile(fileName, ios_base::binary);
+	assert(sampleFile);
+	int sequence_size = 0;
+	int dimensionNumber = 0;
+	sampleFile.read((char*)&sequence_size, sizeof(int));
+	sampleFile.read((char*)&dimensionNumber, sizeof(int));
+	pSamples->data = new double[sequence_size*dimensionNumber];
+	pSamples->sample_size = sequence_size;
+	pSamples->sample_dimension = dimensionNumber;
+	double* v = new double[dimensionNumber];
+	for (int i = 0; i < sequence_size; i++){
+		sampleFile.read((char*)v, sizeof(double) * dimensionNumber);
+		memcpy(pSamples->data+i*dimensionNumber, v,sizeof(double) * dimensionNumber);
+	}
+	/*
+	printf("\n");
+	for (int i = 0; i < sequence_size; i++){
+		for (int j = 0; j < dimensionNumber; j++){
+			printf("%lf ", pSamples->data[(i*dimensionNumber)+j]);
+		}
+		printf("\n");
+	}
+	*/
+	sampleFile.close();
+	return pSamples;
 }
 //<sequence_size_M><dimension_N><data_11><data_12>...<data_1N><data_21>...<data_MN>
 void CHMM::ReadDataBinaryToInitGMMs(const char* fileName)

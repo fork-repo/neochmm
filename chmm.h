@@ -3,6 +3,14 @@
 #include "gmm.h"
 using namespace std;
 
+class SAMPLES
+{
+public:
+	int sample_size;
+	int sample_dimension;
+	double *data;
+};
+
 class CHMM
 {
 public:
@@ -10,6 +18,7 @@ public:
 	CHMM(int stateNumber, int dimensionNumber, int mixtureNumber);
 	~CHMM();
 	void Train(const char* fileName);
+	SAMPLES* ReadDataBinary(const char* fileName);
 	void ReadDataBinaryToInitGMMs(const char*);
 	friend std::ostream& operator<<(std::ostream& out, CHMM& chmm);
 	friend std::istream& operator>>(std::istream& in, CHMM& chmm);
