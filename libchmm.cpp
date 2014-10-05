@@ -7,6 +7,146 @@
 #include <math.h>
 #include <iomanip> // for print format
 using namespace std;
+void CHMM::InitFromData(const char* fileName)
+{
+	ReadDataBinaryToInitGMMs(fileName);	
+	isInited = true;
+}
+void CHMM::InitFromModel(const char* fileName, CHMM* pchmm)
+{
+    ifstream read_chmm_file(fileName);
+    assert(read_chmm_file);
+    read_chmm_file>>*pchmm;
+    read_chmm_file.close();
+  	isInited = true;
+}
+void CHMM::Train(const char* fileName, double endError)
+{
+	assert(isInited);
+	bool loop = true;
+	int unchanged = 0;
+	double cost = 0;
+	double lastCost = 0;
+	//new_pi,new_A,train_C_data_for_each_state[]用來update
+	double *new_pi = new double[m_stateNumber];
+	double **new_A = new double*[m_stateNumber];
+	for (int i = 0; i < m_stateNumber; i++){
+		new_A[i] = new double[m_stateNumber + 1]; // 加上最後的狀態
+	}
+	SAMPLES* pSamples = ReadDataBinary(fileName);
+	int* labels_for_decode = new int[pSamples->sample_size];
+	vector<double*> *train_gmm_samples_for_each_state = new vector<double*>[m_stateNumber];
+	while (loop)
+	{
+		lastCost = cost;
+		cost = 0;
+		//清除所有計算值
+		for (int i = 0; i < m_stateNumber; i++)
+		{
+			for (int j=0;j < train_gmm_samples_for_each_state[i].size();j++){
+				train_gmm_samples_for_each_state[i].clear();
+			}
+			memset(new_A[i], 0, sizeof(double) * (m_stateNumber + 1));
+		}
+		memset(new_pi, 0, sizeof(double) * m_stateNumber);
+		//
+		//for (int z = 0; z < 10; z++)
+		//{
+			//Decode算出該HMM的成本
+			cost += (Decode(pSamples, labels_for_decode));
+			//cost += LogProbability(Decode(pSamples, labels_for_decode));
+			for (int t = 0; t < pSamples->sample_size ;t++){
+	 			printf("%d ", labels_for_decode[t]);
+			}
+			printf("\n");
+			//printf("\nc=%lf\n",cost);
+			// separate samples into train_gmm_samples_for_each_state[]
+			for (int i = 0; i < pSamples->sample_size; i++){
+				train_gmm_samples_for_each_state[labels_for_decode[i]].push_back(pSamples->data+(i*pSamples->sample_dimension));
+			}
+			/*
+			printf("\n");
+			for (int i = 0; i < m_stateNumber; i++){
+				for (int j=0;j < train_gmm_samples_for_each_state[i].size();j++){
+					double *v = train_gmm_samples_for_each_state[i][j];
+					printf("[%d][%d]%lf,%lf,%lf\n",i,j,v[0],v[1],v[2]);
+				}
+			}
+			*/
+			memcpy(new_pi,m_pi,sizeof(double) * m_stateNumber);
+			new_pi[labels_for_decode[0]]++;
+			for (int i = 0; i < m_stateNumber; i++){
+				memcpy(new_A[i],m_A[i],sizeof(double) * (m_stateNumber + 1));	
+			}
+			for (int j = 0; j < pSamples->sample_size; j++)
+			{
+				if (j > 0){
+					new_A[labels_for_decode[j-1]][labels_for_decode[j]]++;
+				}
+			}
+			new_A[labels_for_decode[pSamples->sample_size-1]][m_stateNumber]++; //final state ++
+		//}
+		//cost /= 10;
+		//更新C
+		for (int i = 0; i < m_stateNumber; i++)
+		{
+			if (train_gmm_samples_for_each_state[i].size() >= m_gmms[i]->GetMixtureNumber() * 2){
+				m_gmms[i]->Train(train_gmm_samples_for_each_state[i],0.00001);
+			}else{
+				//printf("train_gmm_samples_for_each_state[%d].sample_size = %d too small, don't update C\n",i,train_gmm_samples_for_each_state[i].size());
+			}
+		}
+		double denominator=0;
+		//計算new_pi[]的總和
+		for (int i = 0; i < m_stateNumber; i++){
+			denominator += new_pi[i];
+		}
+		//printf("denominator = %lf\n",denominator);
+		//
+		//更新pi
+		for (int i = 0; i < m_stateNumber; i++){
+			m_pi[i] = 1.0 * new_pi[i] / denominator;
+		}
+		/*
+		printf("m_pi[]:\n");
+		for (int i = 0; i < m_stateNumber; i++){
+			printf("%lf ", m_pi[i]);
+		}
+		printf("\n");
+		*/
+		//
+		//更新A
+		for (int i = 0; i < m_stateNumber; i++){
+			denominator = 0;
+			// include final state
+			//計算new_A[i][]的總和
+			for (int j = 0; j < m_stateNumber + 1; j++){
+				denominator += new_A[i][j];
+			}
+			if (denominator > 0){
+				for (int j = 0; j < m_stateNumber + 1; j++){
+					m_A[i][j] = 1.0 * new_A[i][j] / denominator;
+				}
+			}
+		}	
+		//終止條件
+		printf("CHMM cost-lastCost(%lf,%lf,%lf)\n",cost,lastCost,endError * fabs(lastCost));
+		unchanged = (cost - lastCost <= endError * fabs(lastCost)) ? (unchanged + 1) : 0;
+		if ( unchanged >= 3){
+			loop = false;
+		}
+	}
+	//
+	printf("finish train, decode again:");
+	 int* plabels = new int[pSamples->sample_size];
+     double p = Decode(pSamples,plabels);
+     for(int i=0; i < pSamples->sample_size ; i++){
+        printf("%d ", plabels[i]);
+     }
+     printf(": p=%lf\n",p);
+     //
+	//PrintModel();
+}
 void CHMM::PrintModel()
 {
 	printf("m_stateNumber:\n");
@@ -180,12 +320,14 @@ double CHMM::Decode(SAMPLES* pSamples, int*labels)
 	int** psi = new int*[pSamples->sample_size];
 	// Init
 	psi[0] = new int[m_stateNumber];
+	printf("previous_delta =\n");
 	for (int i = 0; i < m_stateNumber; i++){
 		// pi * C
 		previous_delta[i] = LogProbability(m_pi[i]) + LogProbability(m_gmms[i]->GetProbability(pSamples->data));
+		printf("p = %lf\n ", LogProbability(m_gmms[i]->GetProbability(pSamples->data)));
 		psi[0][i] = -1;
 	}
-	
+	printf("\n");
 	for (int t = 1; t < pSamples->sample_size; t++){
 		psi[t] = new int[m_stateNumber];
 		for (int i = 0; i < m_stateNumber; i++)
@@ -226,107 +368,6 @@ double CHMM::Decode(SAMPLES* pSamples, int*labels)
 	 	labels[t] = psi[t+1][labels[t+1]];
 	}
 	return prob;
-}
-void CHMM::Train(const char* fileName, double endError)
-{
-	ReadDataBinaryToInitGMMs(fileName);	
-	bool loop = true;
-	int unchanged = 0;
-	double cost = 0;
-	double lastCost = 0;
-	//new_pi,new_A,train_C_data_for_each_state[]用來update
-	double *new_pi = new double[m_stateNumber];
-	double **new_A = new double*[m_stateNumber];
-	for (int i = 0; i < m_stateNumber; i++){
-		new_A[i] = new double[m_stateNumber + 1]; // 加上最後的狀態
-	}
-	SAMPLES* pSamples = ReadDataBinary(fileName);
-	int* labels_for_decode = new int[pSamples->sample_size];
-	vector<double*> *train_gmm_samples_for_each_state = new vector<double*>[m_stateNumber];
-	while (loop)
-	{
-		lastCost = cost;
-		cost = 0;
-		//清除所有計算值
-		for (int i = 0; i < m_stateNumber; i++)
-		{
-			for (int j=0;j < train_gmm_samples_for_each_state[i].size();j++){
-				train_gmm_samples_for_each_state[i].clear();
-			}
-			memset(new_A[i], 0, sizeof(int) * (m_stateNumber + 1));
-		}
-		memset(new_pi, 0, sizeof(int) * m_stateNumber);
-		//
-		//Decode算出該HMM的成本
-		cost += (Decode(pSamples, labels_for_decode));
-		//cost += LogProbability(Decode(pSamples, labels_for_decode));
-		for (int t = 0; t < pSamples->sample_size ;t++){
-	 		printf("%d ", labels_for_decode[t]);
-		}
-		//printf("\nc=%lf\n",cost);
-		// separate samples into train_gmm_samples_for_each_state[]
-		for (int i = 0; i < pSamples->sample_size; i++){
-			train_gmm_samples_for_each_state[labels_for_decode[i]].push_back(pSamples->data+(i*pSamples->sample_dimension));
-		}
-		/*
-		printf("\n");
-		for (int i = 0; i < m_stateNumber; i++){
-			for (int j=0;j < train_gmm_samples_for_each_state[i].size();j++){
-				double *v = train_gmm_samples_for_each_state[i][j];
-				printf("[%d][%d]%lf,%lf,%lf\n",i,j,v[0],v[1],v[2]);
-			}
-		}
-		*/
-		new_pi[labels_for_decode[0]]++;
-		for (int j = 0; j < pSamples->sample_size; j++)
-		{
-			if (j > 0){
-				new_A[labels_for_decode[j-1]][labels_for_decode[j]]++;
-			}
-		}
-		new_A[labels_for_decode[pSamples->sample_size-1]][m_stateNumber]++; //final state ++
-		//更新C
-		for (int i = 0; i < m_stateNumber; i++)
-		{
-			if (train_gmm_samples_for_each_state[i].size() > m_gmms[i]->GetMixtureNumber() * 2){
-				m_gmms[i]->Train(train_gmm_samples_for_each_state[i],0.00001);
-			}else{
-				//printf("train_gmm_samples_for_each_state[%d].sample_size = %d too small, don't update C\n",i,train_gmm_samples_for_each_state[i].size());
-			}
-		}
-		int denominator=0;
-		//計算new_pi[]的總和
-		for (int i = 0; i < m_stateNumber; i++){
-			denominator += new_pi[i];
-		}
-		//
-		//更新pi
-		for (int i = 0; i < m_stateNumber; i++){
-			m_pi[i] = 1.0 * new_pi[i] / denominator;
-		}
-		//
-		//更新A
-		for (int i = 0; i < m_stateNumber; i++){
-			denominator = 0;
-			// include final state
-			//計算new_A[i][]的總和
-			for (int j = 0; j < m_stateNumber + 1; j++){
-				denominator += new_A[i][j];
-			}
-			if (denominator > 0){
-				for (int j = 0; j < m_stateNumber + 1; j++){
-					m_A[i][j] = 1.0 * new_A[i][j] / denominator;
-				}
-			}
-		}	
-		//終止條件
-		printf("CHMM cost-lastCost(%lf,%lf,%lf)\n",cost,lastCost,endError * fabs(lastCost));
-		unchanged = (cost - lastCost <= endError * fabs(lastCost)) ? (unchanged + 1) : 0;
-		if ( unchanged >= 3){
-			loop = false;
-		}
-	}
-	//PrintModel();
 }
 //<sequence_size_M><dimension_N><data_11><data_12>...<data_1N><data_21>...<data_MN>
 SAMPLES* CHMM::ReadDataBinary(const char* fileName)
@@ -403,6 +444,7 @@ void CHMM::ReadDataBinaryToInitGMMs(const char* fileName)
 CHMM::CHMM(int stateNumber, int dimensionNumber, int mixtureNumber)
 {
 	//初始化 m_C[][], m_pi[], m_A[][]
+	isInited = false;
 	m_stateNumber = stateNumber;
 	m_mixtureNumber = mixtureNumber;
 	m_dimensionNumber = dimensionNumber; 
@@ -430,4 +472,5 @@ CHMM::~CHMM()
 }
 CHMM::CHMM()
 {
+	isInited = false;
 }
