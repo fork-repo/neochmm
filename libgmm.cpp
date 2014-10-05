@@ -7,6 +7,7 @@
 #include <algorithm> //max()
 //#include <fstream>
 #include <iostream>
+#include <vector>
 using namespace std;
 
 GMM::GMM()
@@ -92,6 +93,7 @@ double GMM::GetProbability(const double* v)
 	double prob = 0;
 	for (int i = 0; i < m_mixtureNumber; i++)
 	{
+		//printf("CalNormalProbability([%lf,%lf,%lf], %d) = %lf\n",v[0],v[1],v[2],i,CalNormalProbability(v, i));
 		prob += m_priors[i] * CalNormalProbability(v, i);
 	}
 	return prob;
@@ -111,7 +113,15 @@ double GMM::CalNormalProbability(const double* v, int index)
 
 void GMM::Train(double *data, int size, double endCondition)
 {
-	//printf("Start GMM Train\n");
+	/*
+	printf("Start GMM Train\n");
+	for(int i = 0; i < size ; i++){
+		for(int j = 0; j < m_dimensionNumber ; j++){
+			printf("%lf \n",*(data+(i*m_dimensionNumber+j)));
+		}
+		printf("\n");
+	}
+	*/	
 	//init 初始化m_priors[], m_means[], m_variances[]
 	const double MIN_VAR = 1E-10;
 	//利用kmans由data求出m_means[]
@@ -277,7 +287,21 @@ void GMM::Train(double *data, int size, double endCondition)
 	delete[] new_variances;
 	delete[] v;
 }
-
+void GMM::Train(vector<double*> data_sequence, double endCondition)
+{
+	double* data = new double[data_sequence.size()*m_dimensionNumber];
+	for(int i =0; i < data_sequence.size() ; i++){
+		memcpy(data+(i*m_dimensionNumber), data_sequence[i],sizeof(double)*m_dimensionNumber);
+	}
+	/*
+	printf("[neo] %d\n", data_sequence.size() );
+	for(int i =0; i < data_sequence.size() ; i++){
+		printf("[neo]%lf,%lf,%lf\n", data[i*m_dimensionNumber+0],data[i*m_dimensionNumber+1],data[i*m_dimensionNumber+2] );
+	}
+	*/
+	this->Train(data, data_sequence.size(), endCondition);
+	delete[] data;
+}
 void GMM::Train(const char* fileName,double endCondition)
 {
 	ifstream sampleFile(fileName, ios_base::binary);
