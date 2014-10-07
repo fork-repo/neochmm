@@ -106,6 +106,7 @@ double GMM::CalNormalProbability(const double* v, int index)
 	for (int d = 0; d < m_dimensionNumber; d++)
 	{
 		prob *= 1 / sqrt(2 * 3.14159 * m_variances[index][d]);
+		//printf("m_dimensionNumber=%d,prob=%lf,m=%lf,index=%d\n",d,prob,m_variances[index][d],index);	
 		prob *= exp(-0.5 * ((v[d] - m_means[index][d]) * (v[d] - m_means[index][d])) / m_variances[index][d]);
 	}
 	return prob;

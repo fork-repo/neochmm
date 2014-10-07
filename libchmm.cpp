@@ -55,10 +55,12 @@ void CHMM::Train(const char* fileName, double endError)
 			//Decode算出該HMM的成本
 			cost += (Decode(pSamples, labels_for_decode));
 			//cost += LogProbability(Decode(pSamples, labels_for_decode));
+			/*
 			for (int t = 0; t < pSamples->sample_size ;t++){
 	 			printf("%d ", labels_for_decode[t]);
 			}
 			printf("\n");
+			*/
 			//printf("\nc=%lf\n",cost);
 			// separate samples into train_gmm_samples_for_each_state[]
 			for (int i = 0; i < pSamples->sample_size; i++){
@@ -130,20 +132,22 @@ void CHMM::Train(const char* fileName, double endError)
 			}
 		}	
 		//終止條件
-		printf("CHMM cost-lastCost(%lf,%lf,%lf)\n",cost,lastCost,endError * fabs(lastCost));
+		//printf("CHMM cost-lastCost(%lf,%lf,%lf)\n",cost,lastCost,endError * fabs(lastCost));
 		unchanged = (cost - lastCost <= endError * fabs(lastCost)) ? (unchanged + 1) : 0;
 		if ( unchanged >= 3){
 			loop = false;
 		}
 	}
 	//
-	printf("finish train, decode again:");
+	//printf("finish train, decode again:");
 	 int* plabels = new int[pSamples->sample_size];
      double p = Decode(pSamples,plabels);
+     /*
      for(int i=0; i < pSamples->sample_size ; i++){
         printf("%d ", plabels[i]);
      }
      printf(": p=%lf\n",p);
+     */
      //
 	//PrintModel();
 }
@@ -202,7 +206,7 @@ ostream& operator<<(ostream& out, CHMM& chmm)
 	out << "<MixtureNumber> " << chmm.m_mixtureNumber << " </MixtureNumber>" << endl;
 	out << "<Pi> ";
 	for (int i = 0; i < chmm.m_stateNumber; i++){
-		out << setiosflags(ios::fixed) << setprecision(6) << chmm.m_pi[i] << " ";
+		out << setiosflags(ios::fixed) << setprecision(10) << chmm.m_pi[i] << " ";
 	}
 	out << "</Pi>" << endl;
 	out << "<A> " << endl;
@@ -320,14 +324,12 @@ double CHMM::Decode(SAMPLES* pSamples, int*labels)
 	int** psi = new int*[pSamples->sample_size];
 	// Init
 	psi[0] = new int[m_stateNumber];
-	printf("previous_delta =\n");
 	for (int i = 0; i < m_stateNumber; i++){
 		// pi * C
 		previous_delta[i] = LogProbability(m_pi[i]) + LogProbability(m_gmms[i]->GetProbability(pSamples->data));
-		printf("p = %lf\n ", LogProbability(m_gmms[i]->GetProbability(pSamples->data)));
+		//printf("p = %lf\n ", LogProbability(m_gmms[i]->GetProbability(pSamples->data)));
 		psi[0][i] = -1;
 	}
-	printf("\n");
 	for (int t = 1; t < pSamples->sample_size; t++){
 		psi[t] = new int[m_stateNumber];
 		for (int i = 0; i < m_stateNumber; i++)

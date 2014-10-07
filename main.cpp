@@ -29,6 +29,7 @@ int main(int argc, char** argv)
     };
     
     printf("\n---chmm---\n");
+    /*
     //GMM的Mixture 數量不得高於train的data數量?
     CHMM *pchmm = new CHMM(5,3,1);
     //pchmm->InitFromModel("chmm.txt",pchmm);
@@ -38,32 +39,18 @@ int main(int argc, char** argv)
     assert(chmm_file);
     chmm_file<<*pchmm;
     chmm_file.close();
-    
+    */
      CHMM *read_chmm = new CHMM(5,3,1);
      read_chmm->InitFromModel("chmm.txt",read_chmm);
      //read_chmm->PrintModel();
      SAMPLES* psamples = read_chmm->ReadDataBinary("data.seq");
      int i=1;
-     //printf("%lf,%lf,%lf\n",*(psamples->data+(i*3+0)),*(psamples->data+(i*3+1)),*(psamples->data+(i*3+2))) ;
      int* labels = new int[psamples->sample_size];
      double p = read_chmm->Decode(psamples,labels);
-     for(int i=0; i < psamples->sample_size ; i++){
-        printf("%d ", labels[i]);
-     }
-     printf("p=%lf\n",p);
      
-    /*
-    // predict
-     CHMM *pchmm = new CHMM(5,3,1);
-     pchmm->InitFromModel("chmm.txt",pchmm);
-     pchmm->PrintModel();
-     SAMPLES* psamples = pchmm->ReadDataBinary("data.seq");
-     int* labels = new int[psamples->sample_size];
-     pchmm->Decode(psamples,labels);
      for(int i=0; i < psamples->sample_size ; i++){
         printf("%d ", labels[i]);
      }
-     printf("\n");
-     */
+     printf(": prob=%lf\n",p);
      return 0;
 }

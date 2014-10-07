@@ -1,0 +1,77 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+CHMM	.\chmm.h	/^class CHMM$/;"	c
+CHMM	.\libchmm.cpp	/^CHMM::CHMM()$/;"	f	class:CHMM
+CHMM	.\libchmm.cpp	/^CHMM::CHMM(int stateNumber, int dimensionNumber, int mixtureNumber)$/;"	f	class:CHMM
+CalNormalProbability	.\libgmm.cpp	/^double GMM::CalNormalProbability(const double* v, int index)$/;"	f	class:GMM
+Cluster	.\libKMeans.cpp	/^void KMeans::Cluster(double *data, int size, int *Label)$/;"	f	class:KMeans
+Decode	.\libchmm.cpp	/^double CHMM::Decode(SAMPLES* pSamples, int*labels)$/;"	f	class:CHMM
+Dispose	.\libgmm.cpp	/^void GMM::Dispose()$/;"	f	class:GMM
+Distance	.\libKMeans.cpp	/^double KMeans::Distance(const double* v1, const double* v2, int dimensionNumber)$/;"	f	class:KMeans
+GMM	.\gmm.h	/^class GMM$/;"	c
+GMM	.\libgmm.cpp	/^GMM::GMM()$/;"	f	class:GMM
+GMM	.\libgmm.cpp	/^GMM::GMM(int dimensionNumber, int mixtureNumber)$/;"	f	class:GMM
+GetMean	.\KMeans.h	/^	double* GetMean(int index)	{ return m_means[index]; }$/;"	f	class:KMeans
+GetMeans	.\gmm.h	/^	double** GetMeans() { return m_means;};$/;"	f	class:GMM
+GetMixtureNumber	.\gmm.h	/^	int GetMixtureNumber(){ return m_mixtureNumber; };$/;"	f	class:GMM
+GetPriors	.\gmm.h	/^	double* GetPriors() { return m_priors;};$/;"	f	class:GMM
+GetProbability	.\libgmm.cpp	/^double GMM::GetProbability(const double* v)$/;"	f	class:GMM
+GetVariances	.\gmm.h	/^	double** GetVariances() { return m_variances;};$/;"	f	class:GMM
+InitFromData	.\libchmm.cpp	/^void CHMM::InitFromData(const char* fileName)$/;"	f	class:CHMM
+InitFromModel	.\libchmm.cpp	/^void CHMM::InitFromModel(const char* fileName, CHMM* pchmm)$/;"	f	class:CHMM
+KMeans	.\KMeans.h	/^class KMeans$/;"	c
+KMeans	.\libKMeans.cpp	/^KMeans::KMeans(int dimensionNumber, int clusterNumber, double endCondition)$/;"	f	class:KMeans
+LogProbability	.\libchmm.cpp	/^double CHMM::LogProbability(double prob)$/;"	f	class:CHMM
+PredictLabel	.\libKMeans.cpp	/^double KMeans::PredictLabel(double* v1, int* ppredict_label)$/;"	f	class:KMeans
+PrintGMM	.\libgmm.cpp	/^void GMM::PrintGMM()$/;"	f	class:GMM
+PrintMeans	.\libKMeans.cpp	/^void KMeans::PrintMeans()$/;"	f	class:KMeans
+PrintModel	.\libchmm.cpp	/^void CHMM::PrintModel()$/;"	f	class:CHMM
+ReadDataBinary	.\libchmm.cpp	/^SAMPLES* CHMM::ReadDataBinary(const char* fileName)$/;"	f	class:CHMM
+ReadDataBinaryToInitGMMs	.\libchmm.cpp	/^void CHMM::ReadDataBinaryToInitGMMs(const char* fileName)$/;"	f	class:CHMM
+SAMPLES	.\chmm.h	/^class SAMPLES$/;"	c
+SetMeans	.\gmm.h	/^	void SetMeans(int i, int j, double val) { m_means[i][j] = val;};$/;"	f	class:GMM
+SetPriors	.\gmm.h	/^	void SetPriors(int i, double val) { m_priors[i] = val;};$/;"	f	class:GMM
+SetVariances	.\gmm.h	/^	void SetVariances(int i, int j, double val) { m_variances[i][j] = val;};$/;"	f	class:GMM
+Train	.\libchmm.cpp	/^void CHMM::Train(const char* fileName, double endError)$/;"	f	class:CHMM
+Train	.\libgmm.cpp	/^void GMM::Train(const char* fileName,double endCondition)$/;"	f	class:GMM
+Train	.\libgmm.cpp	/^void GMM::Train(double *data, int size, double endCondition)$/;"	f	class:GMM
+Train	.\libgmm.cpp	/^void GMM::Train(vector<double*> data_sequence, double endCondition)$/;"	f	class:GMM
+WIN	.\win.cpp	/^WIN::WIN()$/;"	f	class:WIN
+WIN	.\win.h	/^class WIN$/;"	c
+data	.\chmm.h	/^	double *data;$/;"	m	class:SAMPLES
+isInited	.\chmm.h	/^	bool isInited;$/;"	m	class:CHMM
+m_A	.\chmm.h	/^	double** m_A;  			\/\/狀態轉移機率有[m_stateNumber][m_stateNumber+1]個$/;"	m	class:CHMM
+m_clusterNumber	.\KMeans.h	/^	int m_clusterNumber; $/;"	m	class:KMeans
+m_dimensionNumber	.\KMeans.h	/^	int m_dimensionNumber; $/;"	m	class:KMeans
+m_dimensionNumber	.\chmm.h	/^	int m_dimensionNumber; $/;"	m	class:CHMM
+m_dimensionNumber	.\gmm.h	/^	int m_dimensionNumber; \/\/$/;"	m	class:GMM
+m_dimensionNumber	.\win.h	/^	int m_dimensionNumber; \/\/$/;"	m	class:WIN
+m_endCondition	.\KMeans.h	/^	double m_endCondition;$/;"	m	class:KMeans
+m_gmms	.\chmm.h	/^	GMM** m_gmms;    			\/\/Gaussian Mixture Modols有m_stateNumber個狀態每個狀態有m_mixtureNumber個$/;"	m	class:CHMM
+m_means	.\KMeans.h	/^	double **m_means;$/;"	m	class:KMeans
+m_means	.\gmm.h	/^	double** m_means;$/;"	m	class:GMM
+m_means	.\win.h	/^	double** m_means;$/;"	m	class:WIN
+m_mixtureNumber	.\chmm.h	/^	int m_mixtureNumber;$/;"	m	class:CHMM
+m_mixtureNumber	.\gmm.h	/^	int m_mixtureNumber; \/\/$/;"	m	class:GMM
+m_mixtureNumber	.\win.h	/^	int m_mixtureNumber; \/\/$/;"	m	class:WIN
+m_pi	.\chmm.h	/^	double* m_pi;   		\/\/有m_stateNumber個$/;"	m	class:CHMM
+m_priors	.\gmm.h	/^	double* m_priors; \/\/ weight$/;"	m	class:GMM
+m_priors	.\win.h	/^	double* m_priors; \/\/ weight$/;"	m	class:WIN
+m_stateNumber	.\chmm.h	/^	int m_stateNumber;      \/\/狀態數目$/;"	m	class:CHMM
+m_variance	.\win.h	/^	double** m_variance;$/;"	m	class:WIN
+m_variances	.\gmm.h	/^	double** m_variances;$/;"	m	class:GMM
+main	.\main.cpp	/^int main(int argc, char** argv)$/;"	f
+operator <<	.\libchmm.cpp	/^ostream& operator<<(ostream& out, CHMM& chmm)$/;"	f
+operator <<	.\libgmm.cpp	/^ostream& operator<<(ostream& out, GMM& gmm)$/;"	f
+operator >>	.\libchmm.cpp	/^istream& operator>>(istream& in, CHMM& chmm)$/;"	f
+operator >>	.\libgmm.cpp	/^istream& operator>>(istream& in, GMM& gmm)$/;"	f
+sample_dimension	.\chmm.h	/^	int sample_dimension;$/;"	m	class:SAMPLES
+sample_size	.\chmm.h	/^	int sample_size;$/;"	m	class:SAMPLES
+~CHMM	.\libchmm.cpp	/^CHMM::~CHMM()$/;"	f	class:CHMM
+~GMM	.\libgmm.cpp	/^GMM::~GMM()$/;"	f	class:GMM
+~KMeans	.\libKMeans.cpp	/^KMeans::~KMeans()$/;"	f	class:KMeans
+~WIN	.\win.cpp	/^WIN::~WIN()$/;"	f	class:WIN
