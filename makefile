@@ -1,11 +1,21 @@
-SHELL=cmd.exe
+ifeq ($(OS),Windows_NT)
+   RM = del /Q
+   FixPath = $(subst /,\,$1)
+   SHELL=cmd.exe
+else
+   ifeq ($(shell uname), Linux)
+      RM = rm -f
+      FixPath = $1
+   endif
+endif
+
 CC = gcc
 CPPC = g++
 INCLUDE = .
-CFLAGS =
-OBJ = main.o libchmm.o
-LDFLAG = -lm -lgmm -lKMeans
-LIB = libKMeans.a libgmm.a
+#CFLAGS = -mwindows
+OBJ = main.o
+LDFLAG = -lm -lgmm -lKMeans -lchmm -lwin
+LIB = libKMeans.a libgmm.a libchmm.a libwin.a
 TARGET = main.exe
 
 all: $(OBJ) $(LIB)
@@ -23,10 +33,14 @@ all: $(OBJ) $(LIB)
 	echo *** [AR] $@ : $<
 	ar rcs $@ $<
 
+libchmm.a: libchmm.o libchmm.o libgmm.o libKMeans.o
+	ar rcs $@ $?
+	$(RM) $?
+
 .PHONY: clean
 clean:
-	del /Q $(TARGET)
-	del /Q $(LIB)
-	del /Q $(OBJ)
+	$(RM) $(TARGET)
+	$(RM) $(LIB)
+	$(RM) $(OBJ)
 run:
 	./$(TARGET)

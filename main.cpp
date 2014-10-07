@@ -12,6 +12,7 @@
 
 using namespace std;
 
+
 int main(int argc, char** argv)
 {
     
@@ -47,10 +48,14 @@ int main(int argc, char** argv)
      int i=1;
      int* labels = new int[psamples->sample_size];
      double p = read_chmm->Decode(psamples,labels);
-     
      for(int i=0; i < psamples->sample_size ; i++){
         printf("%d ", labels[i]);
      }
      printf(": prob=%lf\n",p);
+     WIN *pw =  new WIN();
+
+     CreateWindows("abcdefg",300,300);
+     ShowWindows();
+      printf("aaaaaaaaaa\n");
      return 0;
 }
