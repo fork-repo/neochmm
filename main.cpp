@@ -12,6 +12,22 @@
 
 using namespace std;
 
+COMPONENTID* pid;
+
+void quit()
+{
+  exit(0);
+}
+
+void update()
+{
+  drawMoveTo(pid,300,0);
+  drawLineTo(pid, 400, 10);
+ // drawLineTo(pid, 200, 200);
+  
+  //drawRectangle(pid, 50, 50, 0, 0);
+
+}
 
 int main(int argc, char** argv)
 {
@@ -54,15 +70,41 @@ int main(int argc, char** argv)
      printf(": prob=%lf\n",p);
      WIN *pw =  new WIN();
      Init();
-     //ShowWindows();
-     int quit=1;
+     pid = CreateWindows("abcdefg",600,600,quit, update);
+     ShowWindows(pid);
+     int quit=0;
+     EVENTS* pEvents = (EVENTS*)malloc(sizeof(EVENTS));
+     int eventGet = 0; 
      while(!quit){
-        Sleep(2000);   
-        PullEvents(); 
-        //printf("\n");
+        //Sleep(2000); 
+        eventGet = PullEvents(pEvents); 
+        if (eventGet){
+            switch (pEvents->eventtype)
+            {
+                case KEVENT:
+                    switch (pEvents->keyevent.key)
+                    {
+                        case 27:
+                            exit(0);
+                            break;
+                        case 13:
+                            printf("press enter\n");
+                            break;
+                        default:
+                            printf("key(%u,ctrl[%d],shift[%d])\n",pEvents->keyevent.key,pEvents->keyevent.ctrl,pEvents->keyevent.shift);
+                            break;
+                    }
+                    break;
+                case MEVENT:
+                    printf("mouse(%d,%d,[%d])\n",pEvents->mouseevent.x,pEvents->mouseevent.y,pEvents->mouseevent.state);
+                    break;
+                case WEVENT:
+                    break;
+                default:
+                    break;
+            }
+        }
      }
-     //CreateWindows("abcdefg",300,300);
-     //ShowWindows();
-      printf("aaaaaaaaaa\n");
      return 0;
 }
+

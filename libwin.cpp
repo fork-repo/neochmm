@@ -6,6 +6,8 @@ using namespace std;
 
 HWND rootHWND;
 HINSTANCE rootHInstance;
+void (*EXITFunction)();
+void (*UPDATEFunction)();
 
 static void debug(const char * format,...)
 {
@@ -70,24 +72,32 @@ LRESULT CALLBACK WndProcedure(HWND hWnd , UINT Msg, WPARAM wParam, LPARAM lParam
     switch(Msg)
     {
         case WM_CREATE:
-                printf("window create\n");
-                return TRUE;
+                //printf("window create\n");
                 break;
-        case WM_SETFOCUS:                       
+        case WM_SETFOCUS: 
+                //printf("WM_SETFOCUS\n");                      
                  break;  
         case WM_COMMAND:
+                 //printf("WM_COMMAND\n"); 
                  break;
         case WM_PAINT:
+                 //printf("WM_PAINT\n");
+                 if (UPDATEFunction){
+                    UPDATEFunction();
+                  }
                 break;
         case WM_TIMER:
                  // a timer msg was received so call our main function!
-                PostQuitMessage(WM_QUIT);
-                return TRUE;
+                //PostQuitMessage(WM_QUIT);
                 break;
          case WM_DESTROY:
-                PostQuitMessage(WM_QUIT);
+                 PostQuitMessage(WM_QUIT);
+                 if (EXITFunction){
+                    EXITFunction();
+                  }
                  break;
          default:
+                 //printf("default\n");
                  return DefWindowProc(hWnd, Msg , wParam, lParam);
     }
     return 0;
@@ -136,6 +146,7 @@ void Init()
       wce.lpfnWndProc = WndProcedure;
       wce.lpszClassName = "BasicApp";
       wce.hInstance = rootHInstance;
+      wce.hbrBackground = (HBRUSH)(COLOR_WINDOW);
      // RegisterClass(&wce);
       if ( RegisterClass(&wce) == 0 ) {
         MessageBox(NULL, "Register window fail!", "ERROR!" , MB_ICONEXCLAMATION | MB_OK);
@@ -159,16 +170,14 @@ void Init()
           MessageBox (NULL, "Create window fail!", "ERROR!" , MB_ICONEXCLAMATION | MB_OK);
         return;
       }
-     // rootHWND = hWnd;
+      rootHWND = hWnd;
 
 }
 
-int CreateWindows(const char* title,int winWidth, int winHeight)
+COMPONENTID* CreateWindows(const char* title,int winWidth, int winHeight, void (*exitFunction)(), void (*updateFunction)())
 {
-	  // COLORREF backgroundColor = RGB (238, 238 , 224 );
-      // int winWidth = 300 ;
-      // int winHeight = 300 ;     
-   	  //     MSG        Msg ;         //GetMessage傳回值
+	  //COLORREF backgroundColor = RGB(238, 238, 224);
+    COMPONENTID* pid = (COMPONENTID*)malloc(sizeof(COMPONENTID));
         HWND       hWnd ;        //CreateWindow時傳回值
         //註冊視窗
         const char ClsName[]  = "BasicApp" ;
@@ -177,7 +186,7 @@ int CreateWindows(const char* title,int winWidth, int winHeight)
         strcpy(WndName, title);
         
         //debug ("create window[%s]\n", WndName);
-
+/*
         WNDCLASSEX WndClsEx ;
         WndClsEx .cbSize      = sizeof(WNDCLASSEX );
         WndClsEx .style       = CS_HREDRAW | CS_VREDRAW;
@@ -198,6 +207,7 @@ int CreateWindows(const char* title,int winWidth, int winHeight)
         MessageBox (NULL, "register windows fail !", "ERROR!" , MB_ICONEXCLAMATION | MB_OK);
         return 0 ;
     }
+    */
         int screenX = GetSystemMetrics(SM_CXSCREEN );
         int screenY = GetSystemMetrics(SM_CYSCREEN );
 
@@ -218,10 +228,13 @@ int CreateWindows(const char* title,int winWidth, int winHeight)
         {
         MessageBox (NULL, "Create window fail!", "ERROR!" ,
             MB_ICONEXCLAMATION | MB_OK);
-        return 0 ;
+        return NULL;
     }
+    pid->hwnd = hWnd;
+    EXITFunction = exitFunction;
+    UPDATEFunction = updateFunction;
     //rootHWND = hWnd;
-    return 0;
+    return pid;
     /*
         ShowWindow(hWnd, SW_SHOWNORMAL);
         UpdateWindow(hWnd);
@@ -236,35 +249,88 @@ int CreateWindows(const char* title,int winWidth, int winHeight)
 
 }
 
-int ShowWindows()
+int ShowWindows(COMPONENTID* pid)
 {
-	 	MSG        msg ;  
-	 	ShowWindow(rootHWND, SW_SHOWNORMAL);
-        UpdateWindow(rootHWND);
-       /* while(GetMessage(&Msg, NULL, 0 , 0 ) > 0 )
-        {
-             TranslateMessage(&Msg);
-             DispatchMessage(&Msg);
-        }*/
-       while ( PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) ) {
-			if ( msg.message == WM_QUIT ) break;
-			TranslateMessage( &msg );
-			DispatchMessage( &msg );
-			//printf("aaaa\n");
-		}
-        return msg.wParam;
+	 	ShowWindow(pid->hwnd, SW_SHOWNORMAL);
+    UpdateWindow(pid->hwnd);
 }
 
-int Pullevents()
+void drawSetPixel(COMPONENTID* pid, int x, int y, int R, int G,int B)
 {
-    MSG        msg ;  
-   // ShowWindow(rootHWND, SW_SHOWNORMAL);
-   //     UpdateWindow(rootHWND);
-    
-      TranslateMessage( &msg );
-      DispatchMessage( &msg );
-      //printf("aaaa\n");
-        return msg.wParam;
+   HDC hdc;
+   COLORREF color = RGB(R,G,B);
+   hdc = GetDC(pid->hwnd);
+   SetPixel(hdc, x, y, color);
+   ReleaseDC(pid->hwnd, hdc);
+
+}
+void drawMoveTo(COMPONENTID* pid, int x, int y)
+{
+   HDC hdc;
+   hdc = GetDC(pid->hwnd);
+   MoveToEx(hdc, x, y,(LPPOINT) NULL);
+   ReleaseDC(pid->hwnd, hdc);
+}
+void drawLineTo(COMPONENTID* pid, int x, int y)
+{
+   HDC hdc;
+   hdc = GetDC(pid->hwnd);
+   LineTo(hdc, x, y);
+   ReleaseDC(pid->hwnd, hdc);
+}
+
+void drawRectangle(COMPONENTID* pid, int x1, int y1,int x2, int y2)
+{
+   HDC hdc;
+   hdc = GetDC(pid->hwnd);
+   Rectangle(hdc, x1, y1, x2, y2);
+   ReleaseDC(pid->hwnd, hdc);
+}
+int PullEvents(EVENTS* pEvents)
+{
+  MSG msg; 
+  int ret = 0;
+  memset(pEvents,0,sizeof(EVENTS)); 
+  PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);  
+  if (msg.message == WM_KEYDOWN)
+  {
+    pEvents->eventtype = KEVENT;
+    switch (msg.wParam)
+    {
+    case VK_ESCAPE:
+      pEvents->keyevent.key = 27;
+      pEvents->keyevent.ctrl = 0;
+      pEvents->keyevent.shift = 0;
+      break;
+    case VK_RETURN:
+      pEvents->keyevent.key = 13;
+      pEvents->keyevent.ctrl = 0;
+      pEvents->keyevent.shift = 0;
+      break;
+    default:
+      if(::GetKeyState(VK_CONTROL) < 0){
+         pEvents->keyevent.ctrl = 1;
+      }
+      if(::GetKeyState(VK_SHIFT) < 0){
+         pEvents->keyevent.shift = 1;
+      }   
+      pEvents->keyevent.key = msg.wParam;
+      break;
+    }
+    ret = 1; 
+  }else if (msg.message == WM_MOUSEMOVE) {
+    pEvents->eventtype = MEVENT;
+    pEvents->mouseevent.state = (MOUSE_STATE) msg.wParam;
+    pEvents->mouseevent.x = msg.lParam &0xffff;
+    pEvents->mouseevent.y = (msg.lParam & 0xffff0000) >> 16;
+    ret = 1; 
+  }else if(msg.message == WM_SETFOCUS){
+    printf("MOvE\n");
+
+  }
+  TranslateMessage( &msg );
+  DispatchMessage( &msg );
+  return ret;
 }
 
 WIN::WIN()

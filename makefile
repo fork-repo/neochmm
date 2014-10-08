@@ -14,7 +14,7 @@ CPPC = g++
 INCLUDE = .
 #CFLAGS = -mwindows
 OBJ = main.o
-LDFLAG = -lm -lgmm -lKMeans -lchmm -lwin
+LDFLAG = -lm -lgmm -lKMeans -lchmm -lwin -lgdi32
 LIB = libKMeans.a libgmm.a libchmm.a libwin.a
 TARGET = main.exe
 
