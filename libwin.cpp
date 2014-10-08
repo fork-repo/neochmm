@@ -70,6 +70,7 @@ LRESULT CALLBACK WndProcedure(HWND hWnd , UINT Msg, WPARAM wParam, LPARAM lParam
     switch(Msg)
     {
         case WM_CREATE:
+                printf("window create\n");
                 return TRUE;
                 break;
         case WM_SETFOCUS:                       
@@ -124,6 +125,43 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance , PSTR szCmdLine
 	console_main(argc,argv);
     return 0;
 }
+void Init()
+{
+      HWND       hWnd ;
+      WNDCLASS wce;
+      int winWidth = 300;
+      int winHeight = 300;
+      memset(&wce, 0,sizeof(WNDCLASS));
+      //wce.lpfnWndProc = DefWindowProc;
+      wce.lpfnWndProc = WndProcedure;
+      wce.lpszClassName = "BasicApp";
+      wce.hInstance = rootHInstance;
+     // RegisterClass(&wce);
+      if ( RegisterClass(&wce) == 0 ) {
+        MessageBox(NULL, "Register window fail!", "ERROR!" , MB_ICONEXCLAMATION | MB_OK);
+         return;
+      }
+
+        int screenX = GetSystemMetrics(SM_CXSCREEN );
+        int screenY = GetSystemMetrics(SM_CYSCREEN );
+
+        int xCtr = (screenX / 2) - ( winWidth / 2);
+        int yCtr = (screenY/ 2) - ( winHeight / 2);
+ 
+
+      hWnd = CreateWindowEx(0, "BasicApp",
+                                           "BasicApp",
+                                           WS_OVERLAPPED, CW_USEDEFAULT,
+                                           CW_USEDEFAULT, CW_USEDEFAULT,
+                                           CW_USEDEFAULT, NULL, NULL,
+                                           rootHInstance, NULL);
+       if(hWnd == NULL ){
+          MessageBox (NULL, "Create window fail!", "ERROR!" , MB_ICONEXCLAMATION | MB_OK);
+        return;
+      }
+     // rootHWND = hWnd;
+
+}
 
 int CreateWindows(const char* title,int winWidth, int winHeight)
 {
@@ -134,12 +172,12 @@ int CreateWindows(const char* title,int winWidth, int winHeight)
         HWND       hWnd ;        //CreateWindow時傳回值
         //註冊視窗
         const char ClsName[]  = "BasicApp" ;
-        char *WndName;
+        int WndNameLen = StringLength(title);
+        char *WndName = (char*)malloc(sizeof(char)*WndNameLen);
         strcpy(WndName, title);
-        //const char WndName[]  = title ;
         
         //debug ("create window[%s]\n", WndName);
-/*
+
         WNDCLASSEX WndClsEx ;
         WndClsEx .cbSize      = sizeof(WNDCLASSEX );
         WndClsEx .style       = CS_HREDRAW | CS_VREDRAW;
@@ -157,25 +195,9 @@ int CreateWindows(const char* title,int winWidth, int winHeight)
         WndClsEx .lpszClassName = ClsName;
         if(!RegisterClassEx (&WndClsEx))
     {
-        MessageBox (NULL, "視窗類別登記失敗 !", "發生錯誤!" , MB_ICONEXCLAMATION | MB_OK);
+        MessageBox (NULL, "register windows fail !", "ERROR!" , MB_ICONEXCLAMATION | MB_OK);
         return 0 ;
     }
-*/
-    	WNDCLASS WndCls;
-    	WndCls.hCursor	= NULL;
-		WndCls.hIcon		= LoadIcon (NULL, IDI_APPLICATION);
-		WndCls.lpszMenuName	= NULL;
-		WndCls.lpszClassName	= ClsName;
-		WndCls.hbrBackground	= NULL;
-		WndCls.hInstance		= rootHInstance;
-		WndCls.style		= CS_BYTEALIGNCLIENT;
-		WndCls.lpfnWndProc	= WndProcedure;
-		WndCls.cbWndExtra	= 0;
-		WndCls.cbClsExtra	= 0;
-		if ( ! RegisterClass(&WndCls) ) {
-		//SDL_SetError("Couldn't register application class");
-		//return(-1);
-		}
         int screenX = GetSystemMetrics(SM_CXSCREEN );
         int screenY = GetSystemMetrics(SM_CYSCREEN );
 
@@ -198,7 +220,7 @@ int CreateWindows(const char* title,int winWidth, int winHeight)
             MB_ICONEXCLAMATION | MB_OK);
         return 0 ;
     }
-    rootHWND = hWnd;
+    //rootHWND = hWnd;
     return 0;
     /*
         ShowWindow(hWnd, SW_SHOWNORMAL);
@@ -230,6 +252,18 @@ int ShowWindows()
 			DispatchMessage( &msg );
 			//printf("aaaa\n");
 		}
+        return msg.wParam;
+}
+
+int Pullevents()
+{
+    MSG        msg ;  
+   // ShowWindow(rootHWND, SW_SHOWNORMAL);
+   //     UpdateWindow(rootHWND);
+    
+      TranslateMessage( &msg );
+      DispatchMessage( &msg );
+      //printf("aaaa\n");
         return msg.wParam;
 }
 

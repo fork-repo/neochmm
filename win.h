@@ -14,6 +14,10 @@
 
 const char OS[]=ENV_OS;
 
+extern void Init();
+
+extern int PullEvents();
+
 extern int console_main(int argc, char *argv[]);
 
 extern int CreateWindows(const char* title,int winWidth, int winHeight);

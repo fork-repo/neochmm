@@ -53,9 +53,16 @@ int main(int argc, char** argv)
      }
      printf(": prob=%lf\n",p);
      WIN *pw =  new WIN();
-
-     CreateWindows("abcdefg",300,300);
-     ShowWindows();
+     Init();
+     //ShowWindows();
+     int quit=1;
+     while(!quit){
+        Sleep(2000);   
+        PullEvents(); 
+        //printf("\n");
+     }
+     //CreateWindows("abcdefg",300,300);
+     //ShowWindows();
       printf("aaaaaaaaaa\n");
      return 0;
 }
