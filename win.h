@@ -15,7 +15,14 @@
 typedef struct 
 {
 #ifdef _WIN32
+	unsigned int hmenu;
 	HWND hwnd;
+	HDC hDC;
+	HDC memDC;
+	int x;
+	int y;
+	int w;
+	int h;
 #endif	
 } COMPONENTID;
 
@@ -70,11 +77,20 @@ extern void Init();
 extern int PullEvents(EVENTS* pEvents);
 extern int console_main(int argc, char *argv[]);
 extern COMPONENTID* CreateWindows(const char* title,int winWidth, int winHeight, void (*exitFunction)(),void (*updateFunction)());
+extern COMPONENTID* CreateButton(const char* title,int x,int y,int w, int h, COMPONENTID* parent, void (*button_clicked)());
+extern void EnableComponent(COMPONENTID* pid);
+extern void DisableComponent(COMPONENTID* pid);
 extern int ShowWindows(COMPONENTID* pid);
-extern void drawSetPixel(COMPONENTID* pid, int x, int y, int R, int G,int B);
-extern void drawLineTo(COMPONENTID* pid, int x, int y);
-extern void drawRectangle(COMPONENTID* pid, int x1, int y1,int x2, int y2);
-extern void drawMoveTo(COMPONENTID* pid, int x, int y);
+//extern void Render(COMPONENTID* pid);
+extern void Render(COMPONENTID* pid, int x, int y,int w,int h);
+
+extern void drawFillRect(COMPONENTID* pid,int x, int y, int w, int h, COLORREF color);
+extern void drawLine(COMPONENTID* pid,int x1, int y1, int x2, int y2, int size, COLORREF color);
+extern void drawRectangle(COMPONENTID* pid,int x1, int y1, int w, int h, int size, COLORREF fg_color, COLORREF bg_color);
+//extern void drawSetPixel(COMPONENTID* pid, int x, int y, int R, int G,int B);
+//extern void drawLineTo(COMPONENTID* pid, int x, int y);
+//extern void drawRectangle(COMPONENTID* pid, int x1, int y1,int x2, int y2);
+//extern void drawMoveTo(COMPONENTID* pid, int x, int y);
 
 class WIN
 {

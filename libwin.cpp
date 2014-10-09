@@ -6,6 +6,8 @@ using namespace std;
 
 HWND rootHWND;
 HINSTANCE rootHInstance;
+unsigned int hmenu_count;
+void (*hmenu_callback_functions[256])();
 void (*EXITFunction)();
 void (*UPDATEFunction)();
 
@@ -78,13 +80,13 @@ LRESULT CALLBACK WndProcedure(HWND hWnd , UINT Msg, WPARAM wParam, LPARAM lParam
                 //printf("WM_SETFOCUS\n");                      
                  break;  
         case WM_COMMAND:
-                 //printf("WM_COMMAND\n"); 
+                 hmenu_callback_functions[wParam]();
                  break;
         case WM_PAINT:
                  //printf("WM_PAINT\n");
                  if (UPDATEFunction){
                     UPDATEFunction();
-                  }
+                 }
                 break;
         case WM_TIMER:
                  // a timer msg was received so call our main function!
@@ -171,7 +173,25 @@ void Init()
         return;
       }
       rootHWND = hWnd;
+      hmenu_count = 0;
+}
 
+COMPONENTID* CreateButton(const char* title,int x,int y,int w, int h, COMPONENTID* parent, void (*button_clicked)())
+{
+      COMPONENTID* pid = (COMPONENTID*)malloc(sizeof(COMPONENTID));
+      pid->hmenu = hmenu_count;
+      pid->hwnd = CreateWindow ( TEXT ("button"), title,WS_VISIBLE|WS_CHILD|ES_LEFT|1,x,y,w,h,parent->hwnd,(HMENU) pid->hmenu,rootHInstance,NULL);
+      hmenu_callback_functions[pid->hmenu] = button_clicked;
+      hmenu_count++;
+      return pid;
+}     
+
+void EnableComponent(COMPONENTID* pid){
+  EnableWindow(pid->hwnd, TRUE) ;
+}
+
+void DisableComponent(COMPONENTID* pid){
+  EnableWindow(pid->hwnd, FALSE) ;
 }
 
 COMPONENTID* CreateWindows(const char* title,int winWidth, int winHeight, void (*exitFunction)(), void (*updateFunction)())
@@ -230,7 +250,21 @@ COMPONENTID* CreateWindows(const char* title,int winWidth, int winHeight, void (
             MB_ICONEXCLAMATION | MB_OK);
         return NULL;
     }
+    pid->x = xCtr;
+    pid->y = yCtr;
     pid->hwnd = hWnd;
+    RECT rcClient; 
+    GetClientRect(pid->hwnd,&rcClient);
+    pid->w = rcClient.right- rcClient.left;
+    pid->h = rcClient.bottom - rcClient.top;
+    pid->hDC = GetDC(pid->hwnd);
+    pid->memDC = CreateCompatibleDC(0);
+    HBITMAP canvas = CreateCompatibleBitmap(pid->hDC,pid->w,pid->h);
+    SelectObject(pid->memDC,canvas);
+    DeleteObject (canvas);
+    pid->hmenu = hmenu_count;
+    hmenu_count++;
+    
     EXITFunction = exitFunction;
     UPDATEFunction = updateFunction;
     //rootHWND = hWnd;
@@ -255,6 +289,76 @@ int ShowWindows(COMPONENTID* pid)
     UpdateWindow(pid->hwnd);
 }
 
+void Render(COMPONENTID* pid, int x, int y,int w,int h)
+{
+      BitBlt(pid->hDC, x, y ,w,h,pid->memDC,0,0,SRCCOPY);
+}
+
+void drawLine(COMPONENTID* pid,int x1, int y1, int x2, int y2, int size, COLORREF color)
+{
+  HBRUSH originalBrush;
+  HPEN hPen = CreatePen(PS_SOLID,size,color);
+  originalBrush = (HBRUSH) SelectObject(pid->memDC, hPen);
+  // SetMapMode(hDC, MM_ISOTROPIC);
+  // SetWindowExtEx(hDC, 400, 300, NULL);
+  // SetViewportExtEx(hDC,200, 180, NULL);
+  //SetViewportOrgEx(hDC, 0, 0, NULL);
+  MoveToEx (pid->memDC,x1,y1,NULL);
+  LineTo(pid->memDC, x2, y2);
+  SelectObject (pid->memDC, originalBrush);
+  DeleteObject (hPen);
+  DeleteObject (originalBrush);
+}
+
+
+void drawRectangle(COMPONENTID* pid,int x, int y, int w, int h, int size, COLORREF fg_color, COLORREF bg_color)
+{
+  //PAINTSTRUCT     ps;
+  HBRUSH backgroundBrush;
+  HBRUSH originalBrush;
+  //HDC hDC = BeginPaint(pid->hwnd, &ps);
+  backgroundBrush = CreateSolidBrush(bg_color);
+  //originalBrush = (HBRUSH)SelectObject(hDC, newBrush);
+ // SetBkMode(pid->memDC, TRANSPARENT); 
+  HPEN hPen = CreatePen(PS_SOLID,size,fg_color);
+  originalBrush = (HBRUSH) SelectObject(pid->memDC, hPen);
+  SelectObject(pid->memDC, backgroundBrush);
+  // SetMapMode(hDC, MM_ISOTROPIC);
+  // SetWindowExtEx(hDC, 400, 300, NULL);
+  // SetViewportExtEx(hDC,200, 180, NULL);
+  //SetViewportOrgEx(hDC, 0, 0, NULL);
+  Rectangle(pid->memDC, x, y, x+w, y+h);
+  SelectObject (pid->memDC, originalBrush);
+ // DeleteDC(hDC);
+ // EndPaint(pid->hwnd, &ps);
+  DeleteObject (hPen);
+  DeleteObject (backgroundBrush);
+  DeleteObject (originalBrush);
+
+}
+
+void drawFillRect(COMPONENTID* pid,int x, int y, int w, int h, COLORREF color)
+{
+  //PAINTSTRUCT     ps;
+  HBRUSH newBrush;
+  HBRUSH originalBrush;
+  newBrush = CreateSolidBrush(color);
+ // HDC hDC = BeginPaint(pid->hwnd, &ps);
+  originalBrush = (HBRUSH)SelectObject(pid->memDC, newBrush);
+  RECT rc;
+  rc.top = y;
+  rc.left = x;
+  rc.bottom = y+h;
+  rc.right = x+w;
+  FillRect(pid->memDC,&rc,newBrush);
+  //DeleteDC(hDC);
+  SelectObject (pid->memDC, originalBrush);
+  //EndPaint(pid->hwnd, &ps);
+  DeleteObject (newBrush);
+  DeleteObject (originalBrush);  
+}
+
+/*
 void drawSetPixel(COMPONENTID* pid, int x, int y, int R, int G,int B)
 {
    HDC hdc;
@@ -286,12 +390,17 @@ void drawRectangle(COMPONENTID* pid, int x1, int y1,int x2, int y2)
    Rectangle(hdc, x1, y1, x2, y2);
    ReleaseDC(pid->hwnd, hdc);
 }
+*/
 int PullEvents(EVENTS* pEvents)
 {
   MSG msg; 
   int ret = 0;
   memset(pEvents,0,sizeof(EVENTS)); 
-  PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);  
+ // PeekMessage(&msg, NULL, 0, 0, PM_REMOVE); 
+  GetMessage (&msg, NULL, 0 , 0 ); 
+  TranslateMessage( &msg );
+  DispatchMessage( &msg );
+  
   if (msg.message == WM_KEYDOWN)
   {
     pEvents->eventtype = KEVENT;
@@ -328,8 +437,6 @@ int PullEvents(EVENTS* pEvents)
     printf("MOvE\n");
 
   }
-  TranslateMessage( &msg );
-  DispatchMessage( &msg );
   return ret;
 }
 

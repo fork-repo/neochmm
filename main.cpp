@@ -13,20 +13,95 @@
 using namespace std;
 
 COMPONENTID* pid;
-
+COMPONENTID* button;
+COMPONENTID* button2;
+void eventLoop();
 void quit()
 {
+  DeleteDC(pid->memDC);         
+  ReleaseDC(pid->hwnd,pid->hDC);
   exit(0);
 }
 
 void update()
 {
-  drawMoveTo(pid,300,0);
-  drawLineTo(pid, 400, 10);
- // drawLineTo(pid, 200, 200);
-  
-  //drawRectangle(pid, 50, 50, 0, 0);
 
+}
+
+void draw()
+{
+  drawFillRect(pid,0, 0, 600, 500, RGB(255,255,255));
+  drawLine(pid,0, 0, 100, 100, 3, RGB(255,0,0));
+  drawRectangle(pid,00, 50, 450, 400, 30, RGB(0,0,255),RGB(0,255,255));
+  drawLine(pid,100, 100, 200, 100, 6, RGB(0,255,0));
+  drawLine(pid,400, 200, 0, 50, 1, RGB(255,0,255));
+  Render(pid, 0 , 0 , 600, 500);
+}
+/*
+void render(COMPONENTID* pid) 
+{  
+    int g_nWidth = 600;
+    int g_nHeight = 500;
+    //取的hDC
+    HDC hDC = GetDC(pid->hwnd);
+    //建立暫存DC等等繪圖完拷貝到hDC
+    HDC memDC = CreateCompatibleDC(0);
+    //指定暫存DC的畫布大小
+    HBITMAP bmpBack = CreateCompatibleBitmap(hDC,g_nWidth,g_nHeight);
+    SelectObject(memDC,bmpBack);
+    //指定暫存DC的畫筆樣式
+    HPEN penBack = CreatePen(PS_SOLID,1,RGB(255,0,255));
+    SelectObject(memDC,penBack);
+    //指定暫存DC的筆刷樣式  
+    HBRUSH brushBack = CreateSolidBrush(RGB(255,255,255)); 
+    SelectObject(memDC,brushBack);  
+    //清除視窗
+    //取得視窗尺寸
+    RECT rcClient; 
+    GetClientRect(pid->hwnd,&rcClient);
+    //設定清除視窗顏色為白色
+    HBRUSH brushClean = (HBRUSH)GetStockObject(WHITE_BRUSH);
+    FillRect(memDC,&rcClient,brushClean);
+   
+    HBRUSH brushObj = CreateSolidBrush(RGB(0,255,0));
+      
+    int dw = 30;  
+    int rows = g_nHeight/dw;  
+    int cols = g_nWidth/dw;  
+    for (int r=0; r<rows; ++ r)  
+    {  
+        for (int c=0; c<cols; ++c)  
+        {  
+            if (r == c)  
+            {  
+                SelectObject(memDC,brushObj);  
+            }  
+            else  
+            {  
+                SelectObject(memDC,brushBack);  
+            }  
+            Rectangle(memDC,c*dw,r*dw,(c+1)*dw,(r+1)*dw);  
+        }  
+    }  
+    //拷貝暫存DC到hDC
+    BitBlt(hDC,0,0,g_nWidth,g_nHeight,memDC,0,0,SRCCOPY);
+    DeleteObject(brushObj);  
+    DeleteObject(penBack); 
+    DeleteObject(brushBack); 
+    DeleteObject(brushClean); 
+    DeleteObject(bmpBack);  
+    DeleteDC(memDC);         
+    ReleaseDC(pid->hwnd,hDC);
+   // Sleep(1);  
+}  
+*/
+void buttonclicked1()
+{
+  printf("bn1\n");
+}
+void buttonclicked2()
+{
+  printf("bn2\n");
 }
 
 int main(int argc, char** argv)
@@ -71,11 +146,21 @@ int main(int argc, char** argv)
      WIN *pw =  new WIN();
      Init();
      pid = CreateWindows("abcdefg",600,600,quit, update);
+     button = CreateButton("button",10,500,100, 50, pid, buttonclicked1);
+     button2 = CreateButton("button2",200,500,100, 50, pid, buttonclicked2);
+     //DisableComponent(button2);
      ShowWindows(pid);
-     int quit=0;
+     eventLoop();
+     return 0;
+}
+
+void eventLoop()
+{
+ int quit=0;
      EVENTS* pEvents = (EVENTS*)malloc(sizeof(EVENTS));
      int eventGet = 0; 
      while(!quit){
+        draw();
         //Sleep(2000); 
         eventGet = PullEvents(pEvents); 
         if (eventGet){
@@ -105,6 +190,4 @@ int main(int argc, char** argv)
             }
         }
      }
-     return 0;
 }
-

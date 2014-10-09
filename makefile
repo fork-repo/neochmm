@@ -15,6 +15,7 @@ INCLUDE = .
 #CFLAGS = -mwindows
 OBJ = main.o
 LDFLAG = -lm -lgmm -lKMeans -lchmm -lwin -lgdi32
+#LDFLAG = -lm -lgmm -lKMeans -lchmm -lwin
 LIB = libKMeans.a libgmm.a libchmm.a libwin.a
 TARGET = main.exe
 
