@@ -37,64 +37,7 @@ void draw()
   drawLine(pid,400, 200, 0, 50, 1, RGB(255,0,255));
   Render(pid, 0 , 0 , 600, 500);
 }
-/*
-void render(COMPONENTID* pid) 
-{  
-    int g_nWidth = 600;
-    int g_nHeight = 500;
-    //取的hDC
-    HDC hDC = GetDC(pid->hwnd);
-    //建立暫存DC等等繪圖完拷貝到hDC
-    HDC memDC = CreateCompatibleDC(0);
-    //指定暫存DC的畫布大小
-    HBITMAP bmpBack = CreateCompatibleBitmap(hDC,g_nWidth,g_nHeight);
-    SelectObject(memDC,bmpBack);
-    //指定暫存DC的畫筆樣式
-    HPEN penBack = CreatePen(PS_SOLID,1,RGB(255,0,255));
-    SelectObject(memDC,penBack);
-    //指定暫存DC的筆刷樣式  
-    HBRUSH brushBack = CreateSolidBrush(RGB(255,255,255)); 
-    SelectObject(memDC,brushBack);  
-    //清除視窗
-    //取得視窗尺寸
-    RECT rcClient; 
-    GetClientRect(pid->hwnd,&rcClient);
-    //設定清除視窗顏色為白色
-    HBRUSH brushClean = (HBRUSH)GetStockObject(WHITE_BRUSH);
-    FillRect(memDC,&rcClient,brushClean);
-   
-    HBRUSH brushObj = CreateSolidBrush(RGB(0,255,0));
-      
-    int dw = 30;  
-    int rows = g_nHeight/dw;  
-    int cols = g_nWidth/dw;  
-    for (int r=0; r<rows; ++ r)  
-    {  
-        for (int c=0; c<cols; ++c)  
-        {  
-            if (r == c)  
-            {  
-                SelectObject(memDC,brushObj);  
-            }  
-            else  
-            {  
-                SelectObject(memDC,brushBack);  
-            }  
-            Rectangle(memDC,c*dw,r*dw,(c+1)*dw,(r+1)*dw);  
-        }  
-    }  
-    //拷貝暫存DC到hDC
-    BitBlt(hDC,0,0,g_nWidth,g_nHeight,memDC,0,0,SRCCOPY);
-    DeleteObject(brushObj);  
-    DeleteObject(penBack); 
-    DeleteObject(brushBack); 
-    DeleteObject(brushClean); 
-    DeleteObject(bmpBack);  
-    DeleteDC(memDC);         
-    ReleaseDC(pid->hwnd,hDC);
-   // Sleep(1);  
-}  
-*/
+
 void buttonclicked1()
 {
   printf("bn1\n");
@@ -106,7 +49,76 @@ void buttonclicked2()
 
 int main(int argc, char** argv)
 {
+    //
+    HWAVEIN microHandle;
+    WAVEHDR waveHeader;
+    const int NUMPTS = 22050 * 10;   // 10 seconds
+    int sampleRate = 22050;
+    short int waveIn[NUMPTS];   // 'short int' is a 16-bit type; I request 16-bit samples below
+                                // for 8-bit capture, you'd use 'unsigned char' or 'BYTE' 8-bit types
+
+    MMRESULT result = 0;
+    //宣告format為WAVEFORMATEX格式
+    WAVEFORMATEX format;
+    //WAVE_FORMAT_PCM表示沒壓縮
+    format.wFormatTag=WAVE_FORMAT_PCM;      // simple, uncompressed format
+    //8跟16可選
+    format.wBitsPerSample=8;                //  16 for high quality, 8 for telephone-grade
+    //1跟2表示mono跟stereo
+    format.nChannels=1;                     //  1=mono, 2=stereo
+    //給22050
+    format.nSamplesPerSec=sampleRate;       //  22050
+    //
+    format.nAvgBytesPerSec=format.nSamplesPerSec*format.nChannels*format.wBitsPerSample/8;
+    //                                        // = nSamplesPerSec * n.Channels * wBitsPerSample/8
+    format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;                    
+     //                                       // = n.Channels * wBitsPerSample/8
+    format.cbSize=0;
+    //填microHandle
+    result = waveInOpen(&microHandle, WAVE_MAPPER, &format, 0L, 0L, WAVE_FORMAT_DIRECT);
+    if (result)
+    {
+       printf("fail\n");
+        Sleep(10000);
+        return 0; 
+    }
+    //
+     // Set up and prepare header for input
+    waveHeader.lpData = (LPSTR)waveIn;
+    waveHeader.dwBufferLength = NUMPTS*2;
+    waveHeader.dwBytesRecorded=0;
+    waveHeader.dwUser = 0L;
+    waveHeader.dwFlags = 0L;
+    waveHeader.dwLoops = 0L;
+    //填waveHeader
+    waveInPrepareHeader(microHandle, &waveHeader, sizeof(WAVEHDR));
     
+    result = waveInAddBuffer(microHandle, &waveHeader, sizeof(WAVEHDR));
+
+    if (result)
+    {
+        cout << "Fail step 2" << endl;
+        cout << result << endl;
+        Sleep(10000);
+        return 0;
+    }
+
+    result = waveInStart(microHandle);
+
+    if (result)
+    {
+        cout << "Fail step 3" << endl;
+        cout << result << endl;
+        Sleep(10000);
+        return 0;
+    }
+
+     // Wait until finished recording
+     do {} while (waveInUnprepareHeader(microHandle, &waveHeader, sizeof(WAVEHDR))==WAVERR_STILLPLAYING);
+
+     waveInClose(microHandle);
+
+    //
 	double data[] = {
         0.0, 0.2, 0.4,
         0.3, 0.2, 0.4,
