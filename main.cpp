@@ -171,27 +171,57 @@ int main(int argc, char** argv)
      button2 = CreateButton("button2",200,500,100, 50, pid, buttonclicked2);
      //DisableComponent(button2);
      //
-
-  /*
-  int ret;
-  ret = waveInOpen(&hWaveIn, WAVE_MAPPER, &waveform, (DWORD) pid->hwnd, 0, CALLBACK_WINDOW);
-  if (ret){
-    printf("waveInOpen() fail \n");
-    exit(1);
-  }
-
-   pWaveHdr1->lpData          =reinterpret_cast <CHAR*>( pBuffer1 ) ;
-   pWaveHdr1->dwBufferLength  = INP_BUFFER_SIZE ;
-   pWaveHdr1->dwBytesRecorded = 0 ;
-   pWaveHdr1->dwUser          = 0 ;
-   pWaveHdr1->dwFlags         = 0 ;
-   pWaveHdr1->dwLoops         = 1 ;
-   pWaveHdr1->lpNext          = NULL ;
-   pWaveHdr1->reserved        = 0 ;
-   waveInPrepareHeader(hWaveIn, pWaveHdr1, sizeof (WAVEHDR)) ;
-*/
+     //int ret = OutputWAV("neo.wav", 10);
      //
-     int ret = OutputWAV("neo.wav", 10);
+    FILE *fp=NULL;
+    char *wavedata=NULL;
+    WAVEFORMATEX wavef;
+    unsigned int checkTag;
+    unsigned int result=0;
+    unsigned int size=0;
+    unsigned long sound_buffer_size = 0;
+    unsigned long chunk_size=0;
+    fp=fopen("neo.wav","rb");
+    //需要nChannels跟wBitsPerSample才能知道資料的排列方式
+    
+    size = fread(&checkTag,sizeof(char),4,fp);
+    //checkTag shoule be 0x46464952 -> RIFF的little endian
+    printf("checkTag=%x size=%d\n",checkTag,size);
+size = fread(&chunk_size,sizeof(long),1,fp);
+    printf("chunk_size=%lu\n",chunk_size);
+    size = fread(&checkTag,sizeof(char),4,fp);
+    //checkTag shoule be 0x45564157 -> WAVE的little endian
+    printf("checkTag=%x size=%d\n",checkTag,size);
+    size = fread(&checkTag,sizeof(char),4,fp) ;
+    //checkTag shoule be 0x20746d66 -> "fmt "的little endian
+    printf("checkTag=%x size=%d\n",checkTag,size);
+    size = fread(&chunk_size,sizeof(long),1,fp);
+     printf("chunk_size=%lu\n",chunk_size); //18
+    size = fread(&wavef.wFormatTag,sizeof(short),1,fp);
+    //wFormatTag=1 means WAVE_FORMAT_PCM 
+    printf("wFormatTag=%d\n",wavef.wFormatTag);
+    size = fread(&wavef.nChannels,sizeof(short),1,fp);
+    printf("nChannels=%d\n",wavef.nChannels);
+    size = fread(&wavef.nSamplesPerSec,sizeof(long),1,fp) ;
+    printf("nSamplesPerSec=%u\n",wavef.nSamplesPerSec);
+     size = fread(&wavef.nAvgBytesPerSec,sizeof(long),1,fp) ;
+    printf("nAvgBytesPerSec=%u\n",wavef.nAvgBytesPerSec);
+    /*
+    size = fread(&wavef.nBlockAlign,sizeof(short),1,fp) ;
+    printf("nBlockAlign=%u\n",wavef.nBlockAlign);
+    size = fread(&wavef.wBitsPerSample,sizeof(short),1,fp) ;
+    printf("wBitsPerSample=%u\n",wavef.wBitsPerSample);
+    size = fread(&wavef.cbSize,sizeof(short),1,fp) ;
+    printf("cbSize=%u\n",wavef.cbSize);
+    */
+    fseek(fp,sizeof(short)*3,SEEK_CUR); 
+    size = fread(&checkTag,sizeof(char),4,fp) ;
+    //nTag shoule be 0x61746164 -> "data"的little endian
+    printf("checkTag=%x size=%d\n",checkTag,size);
+    size = fread(&sound_buffer_size,sizeof(long),1,fp);
+    printf("sound_buffer_size=%lu\n",sound_buffer_size);
+    wavedata = (char*)malloc(sound_buffer_size);
+    fclose(fp);
      ShowWindows(pid);
      eventLoop();
      return 0;
