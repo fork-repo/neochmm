@@ -4,7 +4,12 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>  
+#include <assert.h> 
+#include <windows.h>
+#include <mmsystem.h>  
+#include <io.h>
+#include <string.h>
+#include <commctrl.h>        
 #include "gmm.h"
 #include "win.h"
 #include "kmeans.h"
@@ -49,7 +54,9 @@ void buttonclicked2()
 
 int main(int argc, char** argv)
 {
+  
     //
+  /*
     HWAVEIN microHandle;
     WAVEHDR waveHeader;
     const int NUMPTS = 22050 * 10;   // 10 seconds
@@ -92,7 +99,7 @@ int main(int argc, char** argv)
     waveHeader.dwLoops = 0L;
     //填waveHeader
     waveInPrepareHeader(microHandle, &waveHeader, sizeof(WAVEHDR));
-    
+
     result = waveInAddBuffer(microHandle, &waveHeader, sizeof(WAVEHDR));
 
     if (result)
@@ -114,10 +121,12 @@ int main(int argc, char** argv)
     }
 
      // Wait until finished recording
-     do {} while (waveInUnprepareHeader(microHandle, &waveHeader, sizeof(WAVEHDR))==WAVERR_STILLPLAYING);
+     do {
+        
+     } while (waveInUnprepareHeader(microHandle, &waveHeader, sizeof(WAVEHDR))==WAVERR_STILLPLAYING);
 
      waveInClose(microHandle);
-
+*/
     //
 	double data[] = {
         0.0, 0.2, 0.4,
@@ -161,6 +170,137 @@ int main(int argc, char** argv)
      button = CreateButton("button",10,500,100, 50, pid, buttonclicked1);
      button2 = CreateButton("button2",200,500,100, 50, pid, buttonclicked2);
      //DisableComponent(button2);
+     //
+
+  HWAVEIN      hWaveIn ;
+  HWAVEOUT     hWaveOut ;
+  WAVEHDR      hWaveHeader; 
+  waveOutReset (hWaveOut) ;
+  waveInReset (hWaveIn) ;
+  //初始化waveform
+  WAVEFORMATEX waveform;
+  waveform.wFormatTag      = WAVE_FORMAT_PCM ;
+  //1=mono,2=stereo
+  waveform.nChannels       = 1 ;
+  //8跟16
+  waveform.wBitsPerSample  = 16 ;
+  //11025跟22050
+  waveform.nSamplesPerSec  = 22050 ;
+  //nBlockAlign = nChannels * wBitsPerSample/8
+  waveform.nBlockAlign     = waveform.nChannels * waveform.wBitsPerSample / 8;
+  //nAvgBytesPerSec = nSamplesPerSec * nChannels * wBitsPerSample/8
+  waveform.nAvgBytesPerSec = waveform.nSamplesPerSec * waveform.nBlockAlign ;
+  waveform.cbSize          = 0 ;
+  int ret;
+  //打開錄音裝置指定給
+  ret = waveInOpen(&hWaveIn,WAVE_MAPPER,&waveform,NULL,NULL,NULL);    
+  if (ret == MMSYSERR_NOERROR){
+      printf("open ok\n");
+  }else{
+         printf("open fail\n");
+  }
+  //
+  int DATASIZE = waveform.nSamplesPerSec*waveform.nBlockAlign*5; //5 is duration time 
+  char* soundBuffer[DATASIZE];
+  hWaveHeader.dwFlags = 0;
+  hWaveHeader.dwUser = 0;
+  hWaveHeader.dwLoops = 0;
+  hWaveHeader.dwBytesRecorded = 0;
+  hWaveHeader.lpData = (LPSTR)soundBuffer; 
+  hWaveHeader.dwBufferLength = DATASIZE;
+  ret = waveInPrepareHeader(hWaveIn, &hWaveHeader, sizeof(WAVEHDR) );  
+  if (ret == MMSYSERR_NOERROR){
+      printf("Prepare Header ok\n");
+  }else{
+         printf("Prepare Header fail\n");
+  }
+  // add buffer to hWaveIn;
+  ret = waveInAddBuffer(hWaveIn, &hWaveHeader, sizeof(WAVEHDR) );      
+
+  if (ret == MMSYSERR_NOERROR) {
+    printf("waveInAddBuffer success\n");
+  }
+  else{
+    printf("waveInAddBuffer fail\n");
+  }
+  //start recording 
+  ret = waveInStart(hWaveIn);
+  if (!ret)                   
+    printf("recording start for 5 sec...\nenter any char to stop\n"); 
+  else 
+    printf("recording fail...\n"); 
+
+  getchar();
+  //stop recording 
+  ret = waveInStop(hWaveIn);
+  if (!ret)                    
+    printf("recording stop\n"); 
+  else 
+    printf("recording stop fail\n"); 
+  //clean buffer header
+  ret = waveInUnprepareHeader(hWaveIn, &hWaveHeader, sizeof(WAVEHDR));
+  if(ret)     
+    printf("UnPrepare Header fail\n"); 
+  else 
+    printf("UnPrepare Header success\n"); 
+  Sleep(500);
+  ret = waveInClose(hWaveIn)==MMSYSERR_NOERROR; 
+  if (ret)
+    printf("waveInClose success\n"); 
+  else 
+    printf("waveInClose fail\n");
+  
+  HMMIO wav_file;
+  wav_file = mmioOpen("wavfile.wav",NULL,MMIO_CREATE|MMIO_WRITE|MMIO_EXCLUSIVE | MMIO_ALLOCBUF); 
+  MMCKINFO wav_file_header1;
+  MMCKINFO wav_file_header2;
+  MMRESULT result;
+  if(wav_file == NULL)
+     printf("mmioOpen fail\n");
+
+   memset(&wav_file_header1,0,sizeof(MMCKINFO));     
+ // ZeroMemory(&wav_file_header1, sizeof(MMCKINFO));
+   mmioSeek(wav_file,0l,SEEK_SET);
+  wav_file_header1.fccType=mmioFOURCC('W', 'A', 'V', 'E');
+  wav_file_header1.cksize = 0;
+  printf("create chunk\n");
+  result = mmioCreateChunk(wav_file ,&wav_file_header1, MMIO_CREATERIFF); 
+/*
+  if (result==MMSYSERR_NOERROR)
+    printf("mmioCreateChunk: wav_file_header1 %s ok\n",result);
+  else
+    printf("mmioCreateChunk: wav_file_header1 fail\n");
+  ZeroMemory(&wav_file_header2, sizeof(MMCKINFO));
+  wav_file_header2.ckid=mmioFOURCC('f', 'm', 't', ' ');
+  wav_file_header2.cksize=sizeof(WAVEFORMATEX)+waveform.cbSize;
+
+        //create fmt chunk
+  result = mmioCreateChunk(wav_file ,&wav_file_header2, 0); 
+  if (result==MMSYSERR_NOERROR)
+    printf("mmioCreateChunk wav_file_header2  %s ok\n",result);
+  else
+    printf("mmioCreateChunk wav_file_header2 fail\n");
+  */
+
+  /*
+  int ret;
+  ret = waveInOpen(&hWaveIn, WAVE_MAPPER, &waveform, (DWORD) pid->hwnd, 0, CALLBACK_WINDOW);
+  if (ret){
+    printf("waveInOpen() fail \n");
+    exit(1);
+  }
+
+   pWaveHdr1->lpData          =reinterpret_cast <CHAR*>( pBuffer1 ) ;
+   pWaveHdr1->dwBufferLength  = INP_BUFFER_SIZE ;
+   pWaveHdr1->dwBytesRecorded = 0 ;
+   pWaveHdr1->dwUser          = 0 ;
+   pWaveHdr1->dwFlags         = 0 ;
+   pWaveHdr1->dwLoops         = 1 ;
+   pWaveHdr1->lpNext          = NULL ;
+   pWaveHdr1->reserved        = 0 ;
+   waveInPrepareHeader(hWaveIn, pWaveHdr1, sizeof (WAVEHDR)) ;
+*/
+     //
      ShowWindows(pid);
      eventLoop();
      return 0;
