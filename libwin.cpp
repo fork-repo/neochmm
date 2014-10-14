@@ -1,6 +1,6 @@
 #include "win.h"
 #include <stdio.h>
-#include <string.h>
+ 
 
 using namespace std;
 
@@ -438,6 +438,167 @@ int PullEvents(EVENTS* pEvents)
 
   }
   return ret;
+}
+
+bool OutputWAV(const char* filename, unsigned int record_time)
+{
+  HWAVEIN      hWaveIn ;
+  HWAVEOUT     hWaveOut ;
+  WAVEHDR      hWaveHeader; 
+  waveOutReset (hWaveOut) ;
+  waveInReset (hWaveIn) ;
+  //初始化waveform
+  WAVEFORMATEX waveform;
+  waveform.wFormatTag      = WAVE_FORMAT_PCM ;
+  //1=mono,2=stereo
+  waveform.nChannels       = 1 ;
+  //8bit跟16bit的取樣
+  waveform.wBitsPerSample  = 16 ;
+  //11025跟22050
+  waveform.nSamplesPerSec  = 22050 ;
+  //nBlockAlign = nChannels * wBitsPerSample/8
+  waveform.nBlockAlign     = waveform.nChannels * waveform.wBitsPerSample / 8;
+  //nAvgBytesPerSec = nSamplesPerSec * nChannels * wBitsPerSample/8
+  waveform.nAvgBytesPerSec = waveform.nSamplesPerSec * waveform.nBlockAlign ;
+  waveform.cbSize          = 0 ;
+  int ret;
+  //打開錄音裝置指定給hWaveIn
+  ret = waveInOpen(&hWaveIn,WAVE_MAPPER,&waveform,NULL,NULL,NULL);    
+  if (ret != MMSYSERR_NOERROR){
+         printf("open fail\n");
+         return false;
+  }
+  //資料大小為record_time秒x22050x2
+  unsigned long DATASIZE = waveform.nSamplesPerSec*waveform.nBlockAlign*record_time; 
+  char soundBuffer[DATASIZE];
+  hWaveHeader.dwFlags = 0;
+  hWaveHeader.dwUser = 0;
+  hWaveHeader.dwLoops = 0;
+  hWaveHeader.dwBytesRecorded = 0;
+  hWaveHeader.lpData = (LPSTR)soundBuffer; 
+  hWaveHeader.dwBufferLength = DATASIZE;
+  //幫hWaveIn準備hWaveHeader
+  ret = waveInPrepareHeader(hWaveIn, &hWaveHeader, sizeof(WAVEHDR) );  
+  if (ret != MMSYSERR_NOERROR){
+         printf("Prepare Header fail\n");
+         return false;
+  }
+  //幫hWaveIn設定buffer為hWaveHeader.lpData即soundBuffer;
+  ret = waveInAddBuffer(hWaveIn, &hWaveHeader, sizeof(WAVEHDR) );      
+
+  if (ret != MMSYSERR_NOERROR) {
+    printf("waveInAddBuffer fail\n");
+    return false;
+  }
+  //開始錄音
+  ret = waveInStart(hWaveIn);
+  if (ret) {               
+    printf("recording fail...\n"); 
+    return false;
+  }
+  //等待錄音時間
+  Sleep(record_time*1000);
+  //錄音結束
+  ret = waveInStop(hWaveIn);
+  if (ret)  {                  
+    printf("recording stop fail\n"); 
+    return false;
+  }
+  //幫hWaveIn清除hWaveHeader
+  ret = waveInUnprepareHeader(hWaveIn, &hWaveHeader, sizeof(WAVEHDR));
+  if(ret){
+    printf("UnPrepare Header fail\n"); 
+    return false;
+  }
+  Sleep(500);
+  //關閉hWaveIn
+  ret = waveInClose(hWaveIn); 
+  if (ret != MMSYSERR_NOERROR){
+    printf("waveInClose fail\n");
+    return false;
+  }
+  //printf("Finish recode, save to %s.\n", filename);
+  //wave資訊存入filename
+  HMMIO wav_file;
+  //wav_file_header1使用來填入RIFF(WAVE)檔頭
+  MMCKINFO wav_file_header1;
+  //wav_file_header1使用來填入fmt資料(waveform)跟data資料
+  MMCKINFO wav_file_header2;
+  wav_file = mmioOpen(const_cast<LPTSTR>(filename) ,NULL,MMIO_CREATE|MMIO_WRITE|MMIO_EXCLUSIVE | MMIO_ALLOCBUF); 
+  MMRESULT result;
+  if(wav_file == NULL){
+     printf("mmioOpen fail\n");
+     return false;
+   }
+  memset(&wav_file_header1,0,sizeof(MMCKINFO));     
+  // ZeroMemory(&wav_file_header1, sizeof(MMCKINFO));
+  mmioSeek(wav_file,0l,SEEK_SET);
+  wav_file_header1.fccType=mmioFOURCC('W', 'A', 'V', 'E');
+  wav_file_header1.cksize = 0;
+  printf("create chunk\n");
+  result = mmioCreateChunk(wav_file ,&wav_file_header1, MMIO_CREATERIFF); 
+  if (result != MMSYSERR_NOERROR){
+    printf("mmioCreateChunk: wav_file_header1 fail\n");
+  }
+  //---
+  memset(&wav_file_header2,0,sizeof(MMCKINFO));     
+  wav_file_header2.ckid=mmioFOURCC('f', 'm', 't', ' ');
+  wav_file_header2.cksize=sizeof(WAVEFORMATEX)+waveform.cbSize;
+  //create fmt chunk
+  result = mmioCreateChunk(wav_file ,&wav_file_header2, 0); 
+  if (result != MMSYSERR_NOERROR){
+    printf("mmioCreateChunk wav_file_header2 fail\n");
+    return false;
+  }
+  //fmt填入waveform
+  ret = mmioWrite(wav_file ,(char*)&waveform,sizeof(WAVEFORMATEX)+waveform.cbSize);   
+  if(ret==-1){
+    printf(  "mmioWrite waveform fail\n");
+    return false;
+  }
+  //printf(  "mmioWrite write %d bytes\n",ret);
+  //
+  //跳出fmt chunk
+  result = mmioAscend(wav_file,&wav_file_header2,0);                   
+  if (result != MMSYSERR_NOERROR ){
+    printf(  "mmioAscend wav_file_header2 %s fail\n",result);
+    return false;
+  }
+  //
+  wav_file_header2.ckid=mmioFOURCC('d', 'a', 't', 'a');
+  //create data Chunk
+  result = mmioCreateChunk(wav_file ,&wav_file_header2,0);             
+  if (result != MMSYSERR_NOERROR){
+    printf(  "mmioCreateChunk wav_file_header2 %s fail\n",result);
+    return false;
+  }
+  //printf("hWaveHeader %d BytesRecorded\n",hWaveHeader.dwBytesRecorded);
+  //data填入hWaveHeader.lpData ---> soundBuffer[]
+  ret = mmioWrite(wav_file,(char*)hWaveHeader.lpData,DATASIZE);       
+  if(ret==-1){
+    printf( "mmioWrite audio data fail\n");
+    return false;
+ }
+//跳出data chunk 
+  result = mmioAscend(wav_file,&wav_file_header2,0);                   
+  if (result != MMSYSERR_NOERROR){
+    printf(  "mmioAscend wav_file_header2 %s fail\n",result); 
+    return false;
+  }
+ 
+  //跳出RIFF chunk
+  result = mmioAscend(wav_file,&wav_file_header1,0);                   
+  if (result !=MMSYSERR_NOERROR){
+    printf(  "mmioAscend wav_file_header1 %s fail\n",result);
+    return false;
+  }
+  //關閉filename
+  result = mmioClose(wav_file,0);
+  if (result==MMIOERR_CANNOTWRITE){
+    printf( "mmioClose fail\n");
+    return false;
+  }
+  return true;
 }
 
 WIN::WIN()

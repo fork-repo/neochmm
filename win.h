@@ -87,6 +87,7 @@ extern void Render(COMPONENTID* pid, int x, int y,int w,int h);
 extern void drawFillRect(COMPONENTID* pid,int x, int y, int w, int h, COLORREF color);
 extern void drawLine(COMPONENTID* pid,int x1, int y1, int x2, int y2, int size, COLORREF color);
 extern void drawRectangle(COMPONENTID* pid,int x1, int y1, int w, int h, int size, COLORREF fg_color, COLORREF bg_color);
+extern bool OutputWAV(const char* filename, unsigned int record_time);
 //extern void drawSetPixel(COMPONENTID* pid, int x, int y, int R, int G,int B);
 //extern void drawLineTo(COMPONENTID* pid, int x, int y);
 //extern void drawRectangle(COMPONENTID* pid, int x1, int y1,int x2, int y2);
