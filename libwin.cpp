@@ -602,6 +602,59 @@ bool OutputWAV(const char* filename, unsigned int record_time)
   return true;
 }
 
+void PlayWAV(short *dwBuffer,long dwBufferLength, int time)
+{
+    bool ret;
+    WAVEOUTCAPS pwoc;
+    //waveOutGetDevCaps檢查播放能力,返回0表示可以播放
+    ret = waveOutGetDevCaps(WAVE_MAPPER,&pwoc,sizeof(WAVEOUTCAPS));
+    if (ret != 0){
+      printf("Can't detect any play device!\n");
+      return;
+    }
+    WAVEFORMATEX waveform;
+    waveform.wFormatTag      = WAVE_FORMAT_PCM ;
+    //1=mono,2=stereo
+    waveform.nChannels       = 1 ;
+    //8bit跟16bit的取樣
+    waveform.wBitsPerSample  = 16 ;
+    //11025跟22050
+    waveform.nSamplesPerSec  = 22050 ;
+    //nBlockAlign = nChannels * wBitsPerSample/8
+    waveform.nBlockAlign     = waveform.nChannels * waveform.wBitsPerSample / 8;
+    //nAvgBytesPerSec = nSamplesPerSec * nChannels * wBitsPerSample/8
+    waveform.nAvgBytesPerSec = waveform.nSamplesPerSec * waveform.nBlockAlign ;
+    waveform.cbSize          = 0 ;
+    HWAVEOUT     hWaveOut ;
+     //waveOutOpen以waveform格式開啟播音設備,返回0表示開啟成功
+    ret = waveOutOpen(&hWaveOut,WAVE_MAPPER,&waveform,NULL,NULL,CALLBACK_NULL);
+    if (ret != 0){
+      printf("waveOutOpen fail!\n");
+      return;
+    }
+    //
+    WAVEHDR WaveOutHdr;
+    WaveOutHdr.lpData =(HPSTR)dwBuffer;
+    WaveOutHdr.dwBufferLength = dwBufferLength;
+    WaveOutHdr.dwFlags =0;
+    //waveOutPrepareHeader準備播放的音頻資料, 返回0成功
+    ret = waveOutPrepareHeader(hWaveOut,&WaveOutHdr,sizeof(WAVEHDR));
+    if (ret != 0){
+      printf("waveOutPrepareHeader fail!\n");
+      return;
+    }
+    //開始播放聲音, 返回0成功
+    ret = waveOutWrite(hWaveOut,&WaveOutHdr,sizeof(WAVEHDR));
+    if (ret != 0){
+      printf("waveOutWrite fail!\n");
+      return;
+    }
+    Sleep(time*1000);
+    printf("ret=%d\n",ret);
+    waveOutReset(hWaveOut);
+    waveOutClose(hWaveOut);
+}
+
 WIN::WIN()
 {
 	if (strcmp(OS,"WIN") ==0){

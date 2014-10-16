@@ -39,7 +39,7 @@ double* val;
 void draw()
 {
   for (int i=0;i< 220500;i++){
-    drawLine(pid,i*(600.0/220500.0), 0+200, i*(600.0/220500.0), (val[i]*100)+200, 1, RGB(255,0,255));
+    //drawLine(pid,i*(600.0/220500.0), 0+200, i*(600.0/220500.0), (val[i]*100)+200, 1, RGB(255,0,255));
   }
   Render(pid, 0 , 0 , 600, 500);
 }
@@ -106,9 +106,18 @@ int main(int argc, char** argv)
     long samplesize=0;
     bool ret;
     ret = ConvertWAVtoSampleData("neo.wav",&val,&samplesize,&wavHeader, &wavData);
+    //short *datas;
+    //long datasize;
+    //WAV_HEADER wavOutHeader;
+    //WAV_DATA wavOutData;
+    //ReadWAV("neo.wav",&datas, &datasize,&wavOutHeader, &wavOutData);
+    //PlayWAV(datas,wavData.Subchunk2Size, 10);
+     
     _mfcc_preEmphasize(val,samplesize,0.97);
     //printf("ret=%d\n",ret);
     //
+    //PlayWAV(datas,wavData.Subchunk2Size, 10);
+     
      ShowWindows(pid);
      eventLoop();
      return 0;

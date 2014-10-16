@@ -88,6 +88,7 @@ extern void drawFillRect(COMPONENTID* pid,int x, int y, int w, int h, COLORREF c
 extern void drawLine(COMPONENTID* pid,int x1, int y1, int x2, int y2, int size, COLORREF color);
 extern void drawRectangle(COMPONENTID* pid,int x1, int y1, int w, int h, int size, COLORREF fg_color, COLORREF bg_color);
 extern bool OutputWAV(const char* filename, unsigned int record_time);
+extern void PlayWAV(short *dwBuffer,long dwBufferLength, int time);
 //extern short* _ReadWAV(const char* filename,WAV_HEADER* pwavHeader, WAV_DATA* pwavData);
 //extern float* ConvertWAVtoSampleData(const char* filename,long* psampleData_size,WAV_HEADER* pwavHeader, WAV_DATA* pwavData);
 //extern void drawSetPixel(COMPONENTID* pid, int x, int y, int R, int G,int B);
