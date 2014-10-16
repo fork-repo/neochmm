@@ -50,3 +50,12 @@ bool ConvertWAVtoSampleData(const char* filename,double** psampleData,long* psam
   *psampleData = buffer;
   return ret;
 }
+
+void _mfcc_preEmphasize(double *sample,int len,double factor)
+{
+ //s2(n) = s(n) - a*s(n-1)
+ for(int i=1;i<len/2;i++)
+ {
+  sample[i]=sample[i]-factor*sample[i-1];
+ }
+}

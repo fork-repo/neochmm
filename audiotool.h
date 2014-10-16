@@ -24,3 +24,4 @@ typedef struct
 
 extern bool ReadWAV(const char* filename,short** pbuffer, long* pwavedata_buffer_size,WAV_HEADER* pwavHeader, WAV_DATA* pwavData);
 extern bool ConvertWAVtoSampleData(const char* filename,double** sampleData,long* psampleData_size,WAV_HEADER* pwavHeader, WAV_DATA* pwavData);
+extern void _mfcc_preEmphasize(double *sample,int len,double factor);
