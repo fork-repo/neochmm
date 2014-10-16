@@ -14,6 +14,7 @@
 #include "win.h"
 #include "kmeans.h"
 #include "chmm.h"
+#include "audiotool.h"
 
 using namespace std;
 
@@ -33,13 +34,13 @@ void update()
 
 }
 
+short* audiodate;
+double* val;
 void draw()
 {
-  drawFillRect(pid,0, 0, 600, 500, RGB(255,255,255));
-  drawLine(pid,0, 0, 100, 100, 3, RGB(255,0,0));
-  drawRectangle(pid,00, 50, 450, 400, 30, RGB(0,0,255),RGB(0,255,255));
-  drawLine(pid,100, 100, 200, 100, 6, RGB(0,255,0));
-  drawLine(pid,400, 200, 0, 50, 1, RGB(255,0,255));
+  for (int i=0;i< 220500;i++){
+    //drawLine(pid,i*(600.0/220500.0), 0+200, i*(600.0/220500.0), (val[i]*100)+200, 1, RGB(255,0,255));
+  }
   Render(pid, 0 , 0 , 600, 500);
 }
 
@@ -55,79 +56,6 @@ void buttonclicked2()
 int main(int argc, char** argv)
 {
   
-    //
-  /*
-    HWAVEIN microHandle;
-    WAVEHDR waveHeader;
-    const int NUMPTS = 22050 * 10;   // 10 seconds
-    int sampleRate = 22050;
-    short int waveIn[NUMPTS];   // 'short int' is a 16-bit type; I request 16-bit samples below
-                                // for 8-bit capture, you'd use 'unsigned char' or 'BYTE' 8-bit types
-
-    MMRESULT result = 0;
-    //宣告format為WAVEFORMATEX格式
-    WAVEFORMATEX format;
-    //WAVE_FORMAT_PCM表示沒壓縮
-    format.wFormatTag=WAVE_FORMAT_PCM;      // simple, uncompressed format
-    //8跟16可選
-    format.wBitsPerSample=8;                //  16 for high quality, 8 for telephone-grade
-    //1跟2表示mono跟stereo
-    format.nChannels=1;                     //  1=mono, 2=stereo
-    //給22050
-    format.nSamplesPerSec=sampleRate;       //  22050
-    //
-    format.nAvgBytesPerSec=format.nSamplesPerSec*format.nChannels*format.wBitsPerSample/8;
-    //                                        // = nSamplesPerSec * n.Channels * wBitsPerSample/8
-    format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;                    
-     //                                       // = n.Channels * wBitsPerSample/8
-    format.cbSize=0;
-    //填microHandle
-    result = waveInOpen(&microHandle, WAVE_MAPPER, &format, 0L, 0L, WAVE_FORMAT_DIRECT);
-    if (result)
-    {
-       printf("fail\n");
-        Sleep(10000);
-        return 0; 
-    }
-    //
-     // Set up and prepare header for input
-    waveHeader.lpData = (LPSTR)waveIn;
-    waveHeader.dwBufferLength = NUMPTS*2;
-    waveHeader.dwBytesRecorded=0;
-    waveHeader.dwUser = 0L;
-    waveHeader.dwFlags = 0L;
-    waveHeader.dwLoops = 0L;
-    //填waveHeader
-    waveInPrepareHeader(microHandle, &waveHeader, sizeof(WAVEHDR));
-
-    result = waveInAddBuffer(microHandle, &waveHeader, sizeof(WAVEHDR));
-
-    if (result)
-    {
-        cout << "Fail step 2" << endl;
-        cout << result << endl;
-        Sleep(10000);
-        return 0;
-    }
-
-    result = waveInStart(microHandle);
-
-    if (result)
-    {
-        cout << "Fail step 3" << endl;
-        cout << result << endl;
-        Sleep(10000);
-        return 0;
-    }
-
-     // Wait until finished recording
-     do {
-        
-     } while (waveInUnprepareHeader(microHandle, &waveHeader, sizeof(WAVEHDR))==WAVERR_STILLPLAYING);
-
-     waveInClose(microHandle);
-*/
-    //
 	double data[] = {
         0.0, 0.2, 0.4,
         0.3, 0.2, 0.4,
@@ -170,58 +98,16 @@ int main(int argc, char** argv)
      button = CreateButton("button",10,500,100, 50, pid, buttonclicked1);
      button2 = CreateButton("button2",200,500,100, 50, pid, buttonclicked2);
      //DisableComponent(button2);
-     //
-     //int ret = OutputWAV("neo.wav", 10);
-     //
-    FILE *fp=NULL;
-    char *wavedata=NULL;
-    WAVEFORMATEX wavef;
-    unsigned int checkTag;
-    unsigned int result=0;
-    unsigned int size=0;
-    unsigned long sound_buffer_size = 0;
-    unsigned long chunk_size=0;
-    fp=fopen("neo.wav","rb");
-    //需要nChannels跟wBitsPerSample才能知道資料的排列方式
-    
-    size = fread(&checkTag,sizeof(char),4,fp);
-    //checkTag shoule be 0x46464952 -> RIFF的little endian
-    printf("checkTag=%x size=%d\n",checkTag,size);
-size = fread(&chunk_size,sizeof(long),1,fp);
-    printf("chunk_size=%lu\n",chunk_size);
-    size = fread(&checkTag,sizeof(char),4,fp);
-    //checkTag shoule be 0x45564157 -> WAVE的little endian
-    printf("checkTag=%x size=%d\n",checkTag,size);
-    size = fread(&checkTag,sizeof(char),4,fp) ;
-    //checkTag shoule be 0x20746d66 -> "fmt "的little endian
-    printf("checkTag=%x size=%d\n",checkTag,size);
-    size = fread(&chunk_size,sizeof(long),1,fp);
-     printf("chunk_size=%lu\n",chunk_size); //18
-    size = fread(&wavef.wFormatTag,sizeof(short),1,fp);
-    //wFormatTag=1 means WAVE_FORMAT_PCM 
-    printf("wFormatTag=%d\n",wavef.wFormatTag);
-    size = fread(&wavef.nChannels,sizeof(short),1,fp);
-    printf("nChannels=%d\n",wavef.nChannels);
-    size = fread(&wavef.nSamplesPerSec,sizeof(long),1,fp) ;
-    printf("nSamplesPerSec=%u\n",wavef.nSamplesPerSec);
-     size = fread(&wavef.nAvgBytesPerSec,sizeof(long),1,fp) ;
-    printf("nAvgBytesPerSec=%u\n",wavef.nAvgBytesPerSec);
-    /*
-    size = fread(&wavef.nBlockAlign,sizeof(short),1,fp) ;
-    printf("nBlockAlign=%u\n",wavef.nBlockAlign);
-    size = fread(&wavef.wBitsPerSample,sizeof(short),1,fp) ;
-    printf("wBitsPerSample=%u\n",wavef.wBitsPerSample);
-    size = fread(&wavef.cbSize,sizeof(short),1,fp) ;
-    printf("cbSize=%u\n",wavef.cbSize);
-    */
-    fseek(fp,sizeof(short)*3,SEEK_CUR); 
-    size = fread(&checkTag,sizeof(char),4,fp) ;
-    //nTag shoule be 0x61746164 -> "data"的little endian
-    printf("checkTag=%x size=%d\n",checkTag,size);
-    size = fread(&sound_buffer_size,sizeof(long),1,fp);
-    printf("sound_buffer_size=%lu\n",sound_buffer_size);
-    wavedata = (char*)malloc(sound_buffer_size);
-    fclose(fp);
+  
+
+    //OutputWAV("neo.wav", 10);
+    WAV_HEADER wavHeader;
+    WAV_DATA wavData;
+    long samplesize=0;
+    bool ret;
+    ret = ConvertWAVtoSampleData("neo.wav",&val,&samplesize,&wavHeader, &wavData);
+    //printf("ret=%d\n",ret);
+    //
      ShowWindows(pid);
      eventLoop();
      return 0;

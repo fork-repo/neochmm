@@ -14,9 +14,9 @@ CPPC = g++
 INCLUDE = .
 #CFLAGS = -mwindows
 OBJ = main.o
-LDFLAG = -lm -lgmm -lKMeans -lchmm -lwin -lgdi32 -lwinmm
+LDFLAG = -lm -lgmm -lKMeans -lchmm -lwin -lgdi32 -lwinmm -laudiotool
 #LDFLAG = -lm -lgmm -lKMeans -lchmm -lwin
-LIB = libKMeans.a libgmm.a libchmm.a libwin.a
+LIB = libKMeans.a libgmm.a libchmm.a libwin.a libaudiotool.a
 TARGET = main.exe
 
 all: $(OBJ) $(LIB)

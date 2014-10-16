@@ -470,6 +470,7 @@ bool OutputWAV(const char* filename, unsigned int record_time)
   }
   //資料大小為record_time秒x22050x2
   unsigned long DATASIZE = waveform.nSamplesPerSec*waveform.nBlockAlign*record_time; 
+  printf("DATASIZE=%lu\n",DATASIZE);
   char soundBuffer[DATASIZE];
   hWaveHeader.dwFlags = 0;
   hWaveHeader.dwUser = 0;
@@ -572,7 +573,7 @@ bool OutputWAV(const char* filename, unsigned int record_time)
     printf(  "mmioCreateChunk wav_file_header2 %s fail\n",result);
     return false;
   }
-  //printf("hWaveHeader %d BytesRecorded\n",hWaveHeader.dwBytesRecorded);
+  printf("hWaveHeader %d BytesRecorded\n",hWaveHeader.dwBytesRecorded);
   //data填入hWaveHeader.lpData ---> soundBuffer[]
   ret = mmioWrite(wav_file,(char*)hWaveHeader.lpData,DATASIZE);       
   if(ret==-1){
