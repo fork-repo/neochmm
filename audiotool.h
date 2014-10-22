@@ -23,5 +23,7 @@ typedef struct
 }WAV_DATA;
 
 extern bool ReadWAV(const char* filename,short** pbuffer, long* pwavedata_buffer_size,WAV_HEADER* pwavHeader, WAV_DATA* pwavData);
-extern bool ConvertWAVtoSampleData(const char* filename,double** sampleData,long* psampleData_size,WAV_HEADER* pwavHeader, WAV_DATA* pwavData);
-extern void _mfcc_preEmphasize(double *sample,int len,double factor);
+extern bool ConvertWAVtoSampleData(const char* filename,float** sampleData,long* psampleData_size,WAV_HEADER* pwavHeader, WAV_DATA* pwavData);
+extern int Preemphasize(float *sample, int sampleN);
+extern int Hamming_window(float *sample, int sampleN);
+extern int _mel_cepstrum_basic(float *sample, int frameSize, float *mel_cep, int fborder, int ceporder, int fft_size);
