@@ -40,7 +40,7 @@ bool ConvertWAVtoSampleData(const char* filename,float** psampleData,long* psamp
 	
   short* tmp;
   int ret = 0;
-  ret = ReadWAV("neo.wav",&tmp,psampleData_size,pwavHeader, pwavData); 
+  ret = ReadWAV(filename,&tmp,psampleData_size,pwavHeader, pwavData); 
   float *buffer = (float*)malloc((*psampleData_size)*sizeof(float));
   if (buffer == NULL){
     printf("malloc memory fial\n");
@@ -49,22 +49,11 @@ bool ConvertWAVtoSampleData(const char* filename,float** psampleData,long* psamp
 
   for (int i=0;i< *psampleData_size;i++){
   	//printf("i=%d\n",i);
-    buffer[i] = (float)tmp[i]/32768;
+    buffer[i] = (float)tmp[i];///32768;
   }
   *psampleData = buffer;
   return ret;
 }
-
-/*
-void _mfcc_preEmphasize(double *sample,int sampleSize,double factor)
-{
- //s2(n) = s(n) - a*s(n-1)
- for(int i=1;i<sampleSize/2;i++)
- {
-  sample[i]=sample[i]-factor*sample[i-1];
- }
-}
-*/
 
 //Filter:H(z) = 1-a*z^(-1)
 int Preemphasize(float *sample, int sampleN)
@@ -333,10 +322,50 @@ int _mel_cepstrum_basic(float *sample, int frameSize, float *mel_cep, int fborde
    MfccDCT(filter_bank, m_dctMatrix, ceporder, fborder, mel_cep);
     free(filter_bank);
 //   /* scale down to be consistent with other kinds of cepstrum coefficients */
- //  f=fborder/(float)fft_size;
- //  for(i=0;i<=ceporder;i++) mel_cep[i]*=f;
+   //f=fborder/(float)fft_size;
+  // for(i=0;i<=ceporder;i++) mel_cep[i]*=f;
   // for(i=0;i<=ceporder;i++) {
   //  printf("mel_cep[%d]=%f\n",i,mel_cep[i]);
   // }
   return 1;
+}
+
+int readMMFCfromWAV(const char* filename,float ***pall_mel_cep,int cepOrder, int fbOrder)
+{
+    WAV_HEADER wavHeader;
+    WAV_DATA wavData;
+    float* samples;
+    float small_data[512];
+    long samplesize;
+    bool ret;
+    float* mel_cep = (float*) malloc(sizeof(float) * (cepOrder + 1));
+    ret = ConvertWAVtoSampleData(filename,&samples,&samplesize,&wavHeader, &wavData);
+    int frame_size = samplesize/256 -1;
+    float** all_mel_cep = (float**) malloc(sizeof(float*) * frame_size);
+    for (int c=0;c < frame_size;c++){
+        all_mel_cep[c] = (float*) malloc(sizeof(float) * (cepOrder + 1));
+    }
+    for (int c=0;c < frame_size;c++){
+        for(int i=0;i<512;i++){
+            small_data[i] = samples[(256*c)+i];
+        }
+         Preemphasize(small_data,512);
+         Hamming_window(small_data, 512);
+        _mel_cepstrum_basic(small_data, 512, mel_cep, fbOrder, cepOrder, 512);
+        for(int i=0;i<(cepOrder + 1);i++) {
+           all_mel_cep[c][i] = mel_cep[i];
+        }
+    }
+    *pall_mel_cep = all_mel_cep;
+    /*
+     for (int c=0;c < frame_size;c++){
+         printf("m%d[ ",c);
+         for(int i=0;i<(cepOrder + 1);i++) {
+             printf("%.2f ",all_mel_cep[c][i]);
+         }
+          printf("]\n");
+     }
+     */
+    // printf("frame_size=%d\n",frame_size);
+     return frame_size;
 }

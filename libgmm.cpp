@@ -17,13 +17,13 @@ GMM::GMM(int dimensionNumber, int mixtureNumber)
 {
 	m_dimensionNumber = dimensionNumber;
 	m_mixtureNumber = mixtureNumber;
-	m_priors = new double[m_mixtureNumber];
-	m_means = new double*[m_mixtureNumber];
-	m_variances = new double*[m_mixtureNumber];
+	m_priors = new float[m_mixtureNumber];
+	m_means = new float*[m_mixtureNumber];
+	m_variances = new float*[m_mixtureNumber];
 	for (int i = 0; i < m_mixtureNumber; i++)
 	{
-		m_means[i] = new double[m_dimensionNumber];
-		m_variances[i] = new double[m_dimensionNumber];
+		m_means[i] = new float[m_dimensionNumber];
+		m_variances[i] = new float[m_dimensionNumber];
 	}
 
 	//init
@@ -88,9 +88,9 @@ void GMM::PrintGMM()
 
 }
 //計算v點在Gaussian Mixture Model的機率
-double GMM::GetProbability(const double* v)
+float GMM::GetProbability(const float* v)
 {
-	double prob = 0;
+	float prob = 0;
 	for (int i = 0; i < m_mixtureNumber; i++)
 	{
 		//printf("CalNormalProbability([%lf,%lf,%lf], %d) = %lf\n",v[0],v[1],v[2],i,CalNormalProbability(v, i));
@@ -100,9 +100,9 @@ double GMM::GetProbability(const double* v)
 }
 
 //計算v點在編號為index的Gaussian分佈的機率
-double GMM::CalNormalProbability(const double* v, int index)
+float GMM::CalNormalProbability(const float* v, int index)
 {
-	double prob = 1;
+	float prob = 1;
 	for (int d = 0; d < m_dimensionNumber; d++)
 	{
 		prob *= 1 / sqrt(2 * 3.14159 * m_variances[index][d]);
@@ -112,7 +112,7 @@ double GMM::CalNormalProbability(const double* v, int index)
 	return prob;
 }
 
-void GMM::Train(double *data, int size, double endCondition)
+void GMM::Train(float *data, int size, float endCondition)
 {
 	/*
 	printf("Start GMM Train\n");
@@ -124,7 +124,7 @@ void GMM::Train(double *data, int size, double endCondition)
 	}
 	*/	
 	//init 初始化m_priors[], m_means[], m_variances[]
-	const double MIN_VAR = 1E-10;
+	const float MIN_VAR = 1E-10;
 	//利用kmans由data求出m_means[]
 	KMeans* kmeans = new KMeans(m_dimensionNumber, m_mixtureNumber, 0.01);
 	int *Label;
@@ -134,20 +134,20 @@ void GMM::Train(double *data, int size, double endCondition)
 	//
 	//printf("Finish KMeans Cluster\n");
 	int* cluster_sizes = new int[m_mixtureNumber];
-	double* overallMeans = new double[m_dimensionNumber];
-	double* overallMinVariances = new double[m_dimensionNumber];
+	float* overallMeans = new float[m_dimensionNumber];
+	float* overallMinVariances = new float[m_dimensionNumber];
 	//更新m_means[]
 	for (int i = 0; i < m_mixtureNumber; i++)
 	{
 		cluster_sizes[i] = 0;
 		m_priors[i] = 0;
-		memcpy(m_means[i], kmeans->GetMean(i), sizeof(double) * m_dimensionNumber);
-		memset(m_variances[i], 0.0, sizeof(double) * m_dimensionNumber);
+		memcpy(m_means[i], kmeans->GetMean(i), sizeof(float) * m_dimensionNumber);
+		memset(m_variances[i], 0.0, sizeof(float) * m_dimensionNumber);
 	}
-	memset(overallMeans, 0, sizeof(double) * m_dimensionNumber);
-	memset(overallMinVariances, 0, sizeof(double) * m_dimensionNumber);
+	memset(overallMeans, 0, sizeof(float) * m_dimensionNumber);
+	memset(overallMinVariances, 0, sizeof(float) * m_dimensionNumber);
 	//計算m_variances[]
-	double *v = new double[m_dimensionNumber];
+	float *v = new float[m_dimensionNumber];
 	int label = -1;
 	for (int i = 0; i < size; i++){
 		for(int j=0;j<m_dimensionNumber;j++){
@@ -158,7 +158,7 @@ void GMM::Train(double *data, int size, double endCondition)
 		//該GMM數量加1
 		cluster_sizes[label]++;
 		//取出v[]所屬的群心來計算m_variances[]
-		double* tmp_mean = kmeans->GetMean(label);
+		float* tmp_mean = kmeans->GetMean(label);
 		for (int j = 0; j < m_dimensionNumber; j++)
 		{
 			m_variances[label][j] += (v[j] - tmp_mean[j]) * (v[j] - tmp_mean[j]);
@@ -176,7 +176,7 @@ void GMM::Train(double *data, int size, double endCondition)
 	{
 		overallMeans[j] /= size;
 		//MIN_VAR= 1E-10;
-		overallMinVariances[j] = max(MIN_VAR, 0.01 * (overallMinVariances[j] / size - overallMeans[j] * overallMeans[j]));
+		overallMinVariances[j] = (float) max(MIN_VAR, (float)0.01 * (overallMinVariances[j] / size - overallMeans[j] * overallMeans[j]));
 	}
 
 	for (int i = 0; i < m_mixtureNumber; i++)
@@ -202,27 +202,27 @@ void GMM::Train(double *data, int size, double endCondition)
 	//init finish
 
 	bool loop = true;
-	double lastL = 0;
-	double cost = 0, lastCost;
+	float lastL = 0;
+	float cost = 0, lastCost;
 	int unchanged = 0;
-	double* new_priors = new double[m_mixtureNumber];
-	double** new_variances = new double*[m_mixtureNumber];
-	double** new_means = new double*[m_mixtureNumber];
+	float* new_priors = new float[m_mixtureNumber];
+	float** new_variances = new float*[m_mixtureNumber];
+	float** new_means = new float*[m_mixtureNumber];
 
 	for (int i = 0; i < m_mixtureNumber; i++)
 	{
-		new_means[i] = new double[m_dimensionNumber];
-		new_variances[i] = new double[m_dimensionNumber];
+		new_means[i] = new float[m_dimensionNumber];
+		new_variances[i] = new float[m_dimensionNumber];
 	}
 	//printf("enter GMM train while loop\n");
 	while (loop)
 	{
 		//清除上次計算的值
-		memset(new_priors, 0, sizeof(double) * m_mixtureNumber);
+		memset(new_priors, 0, sizeof(float) * m_mixtureNumber);
 		for (int i = 0; i < m_mixtureNumber; i++)
 		{
-			memset(new_variances[i], 0, sizeof(double) * m_dimensionNumber);
-			memset(new_means[i], 0, sizeof(double) * m_dimensionNumber);
+			memset(new_variances[i], 0, sizeof(float) * m_dimensionNumber);
+			memset(new_means[i], 0, sizeof(float) * m_dimensionNumber);
 		}
 		cost = 0;
 		//
@@ -231,11 +231,11 @@ void GMM::Train(double *data, int size, double endCondition)
 				v[j]=data[k*m_dimensionNumber+j];
 			}
 			//prob表示資料v在GMM的機率
-			double prob = GetProbability(v);
+			float prob = GetProbability(v);
 			for (int i = 0; i < m_mixtureNumber; i++)
 			{
 				//計算該資料v在編號i的gaussian model中的機率,再乘上該gaussian model的priors,最後除上該資料v在整體GMM的機率
-				double priors_each_gaussian_model = CalNormalProbability(v, i) * m_priors[i] / prob;
+				float priors_each_gaussian_model = CalNormalProbability(v, i) * m_priors[i] / prob;
 				new_priors[i] += priors_each_gaussian_model;
 				for (int j = 0; j < m_dimensionNumber; j++)
 				{
@@ -288,11 +288,11 @@ void GMM::Train(double *data, int size, double endCondition)
 	delete[] new_variances;
 	delete[] v;
 }
-void GMM::Train(vector<double*> data_sequence, double endCondition)
+void GMM::Train(vector<float*> data_sequence, float endCondition)
 {
-	double* data = new double[data_sequence.size()*m_dimensionNumber];
+	float* data = new float[data_sequence.size()*m_dimensionNumber];
 	for(int i =0; i < data_sequence.size() ; i++){
-		memcpy(data+(i*m_dimensionNumber), data_sequence[i],sizeof(double)*m_dimensionNumber);
+		memcpy(data+(i*m_dimensionNumber), data_sequence[i],sizeof(float)*m_dimensionNumber);
 	}
 	/*
 	printf("[neo] %d\n", data_sequence.size() );
@@ -303,7 +303,7 @@ void GMM::Train(vector<double*> data_sequence, double endCondition)
 	this->Train(data, data_sequence.size(), endCondition);
 	delete[] data;
 }
-void GMM::Train(const char* fileName,double endCondition)
+void GMM::Train(const char* fileName,float endCondition)
 {
 	ifstream sampleFile(fileName, ios_base::binary);
 	assert(sampleFile);
@@ -316,12 +316,12 @@ void GMM::Train(const char* fileName,double endCondition)
 	sampleFile.read((char*)&dimensionNumber, sizeof(int));
 	//printf("dimensionNumber=%d\n",dimensionNumber);
 	
-	double* data = new double[sequence_size*dimensionNumber];
+	float* data = new float[sequence_size*dimensionNumber];
 	
 	//printf("\ndata:\n");
 	for (int i = 0; i < sequence_size; i++){
 		//double* v = new double[dimensionNumber];
-		sampleFile.read((char*)&data[i*dimensionNumber], sizeof(double) * dimensionNumber);
+		sampleFile.read((char*)&data[i*dimensionNumber], sizeof(float) * dimensionNumber);
 		//-------------
 		//for (int j = 0; j < dimensionNumber; j++){
 		//	printf("%lf ",data[i*dimensionNumber+j]);
@@ -381,13 +381,13 @@ istream& operator>>(istream& in, GMM& gmm)
 	//clean m_priors[], m_means[], m_variances[]
 	gmm.Dispose();
 	// malloc m_priors[], m_means[], m_variances[]
-	gmm.m_priors = new double[gmm.m_mixtureNumber];
-	gmm.m_means = new double*[gmm.m_mixtureNumber];
-	gmm.m_variances = new double*[gmm.m_mixtureNumber];
+	gmm.m_priors = new float[gmm.m_mixtureNumber];
+	gmm.m_means = new float*[gmm.m_mixtureNumber];
+	gmm.m_variances = new float*[gmm.m_mixtureNumber];
 	for (int i = 0; i < gmm.m_mixtureNumber; i++)
 	{
-		gmm.m_means[i] = new double[gmm.m_dimensionNumber];
-		gmm.m_variances[i] = new double[gmm.m_dimensionNumber];
+		gmm.m_means[i] = new float[gmm.m_dimensionNumber];
+		gmm.m_variances[i] = new float[gmm.m_dimensionNumber];
 	}
 
 	//init

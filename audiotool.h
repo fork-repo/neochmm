@@ -27,3 +27,4 @@ extern bool ConvertWAVtoSampleData(const char* filename,float** sampleData,long*
 extern int Preemphasize(float *sample, int sampleN);
 extern int Hamming_window(float *sample, int sampleN);
 extern int _mel_cepstrum_basic(float *sample, int frameSize, float *mel_cep, int fborder, int ceporder, int fft_size);
+extern int readMMFCfromWAV(const char* filename,float ***pall_mel_cep,int cepOrder, int fbOrder);

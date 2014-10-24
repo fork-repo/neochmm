@@ -8,7 +8,7 @@ class SAMPLES
 public:
 	int sample_size;
 	int sample_dimension;
-	double *data;
+	float *data;
 };
 
 class CHMM
@@ -17,22 +17,31 @@ public:
 	CHMM();
 	CHMM(int stateNumber, int dimensionNumber, int mixtureNumber);
 	~CHMM();
-	void Train(const char*, double);
+	void Train(const char*, float);
+	void Train(SAMPLES* pSamples,float endError);
+
 	SAMPLES* ReadDataBinary(const char*);
+	SAMPLES* ConvertFloatDataToSamples(float** data, int sequence_size, int dimensionNumber);
 	void ReadDataBinaryToInitGMMs(const char*);
 	friend std::ostream& operator<<(std::ostream& out, CHMM& chmm);
 	friend std::istream& operator>>(std::istream& in, CHMM& chmm);
-	double Decode(SAMPLES* pSamples, int*labels);
+	float Decode(SAMPLES* pSamples, int*labels);
 	void PrintModel(void);
 	void InitFromData(const char* fileName);
+	void InitFromData(float** data, int sequence_size, int dimensionNumber);
+	void InitFromSamples(SAMPLES* pSamples);
 	void InitFromModel(const char* fileName,CHMM* pchmm);
+	int GetDimensionNumber(){ return m_dimensionNumber; };
+	int GetStateNumber(){ return m_stateNumber; };
+	int GetMixtureNumber(){ return m_mixtureNumber; };
+	void SaveModel(const char* filename);
 private:
 	bool isInited;
 	int m_stateNumber;      //狀態數目
 	int m_mixtureNumber;
 	int m_dimensionNumber; 
 	GMM** m_gmms;    			//Gaussian Mixture Modols有m_stateNumber個狀態每個狀態有m_mixtureNumber個
-	double* m_pi;   		//有m_stateNumber個
-	double** m_A;  			//狀態轉移機率有[m_stateNumber][m_stateNumber+1]個
-	double LogProbability(double prob);
+	float* m_pi;   		//有m_stateNumber個
+	float** m_A;  			//狀態轉移機率有[m_stateNumber][m_stateNumber+1]個
+	float LogProbability(float prob);
 };
