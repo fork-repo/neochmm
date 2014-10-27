@@ -15,6 +15,7 @@ class CHMM
 {
 public:
 	CHMM();
+	CHMM(const char* fileName);
 	CHMM(int stateNumber, int dimensionNumber, int mixtureNumber);
 	~CHMM();
 	void Train(const char*, float);

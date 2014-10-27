@@ -1,9 +1,43 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 #include "audiotool.h"
 
 #define M_PI   3.14159265358979323846
+
+
+bool WAVInfo(const char* filename)
+{
+ FILE *fp=NULL;
+ WAV_HEADER wavHeader;
+ WAV_DATA wavData;
+    fp=fopen(filename,"rb");
+    if (fp == NULL){
+      printf("fail to open %s\n", filename);
+      return false;
+    }
+    unsigned short cbSize;
+    fread(&wavHeader,sizeof(WAV_HEADER),1,fp); 
+    if (wavHeader.Subchunk1Size==18){
+      fread(&cbSize,1,2,fp);
+    }
+    fread(&wavData,sizeof(WAV_DATA),1,fp);
+    if (wavHeader.AudioFormat == 1){
+      printf("Audio Type is PCM\n");
+
+    }
+    if (wavHeader.NumOfChan == 1){
+      printf("Audio Channel is Mono\n");
+    }else if (wavHeader.NumOfChan == 2){
+      printf("Audio Channel is Sterio\n");
+    }
+    printf("Audio SamplesPerSec is %dHz\n",wavHeader.SamplesPerSec);
+    printf("wavHeader.bitsPerSample=%d\n",wavHeader.bitsPerSample);
+    
+  fclose(fp);
+}
+
 
 bool ReadWAV(const char* filename,short** pbuffer, long* pwavedata_buffer_size,WAV_HEADER* pwavHeader, WAV_DATA* pwavData)
 {
@@ -26,11 +60,35 @@ bool ReadWAV(const char* filename,short** pbuffer, long* pwavedata_buffer_size,W
     fread(pwavData,sizeof(WAV_DATA),1,fp);
     //printf("wavData.Subchunk2ID=%c%c%c%c\n",pwavData->Subchunk2ID[0],wavData.Subchunk2ID[1],wavData.Subchunk2ID[2],wavData.Subchunk2ID[3]);
     //printf("wavData.Subchunk2Size=%lu\n",pwavData->Subchunk2Size);
-    short *wavedata_buffer = (short*)malloc(pwavData->Subchunk2Size); //*sizeof(short)?
-    fread((void*)wavedata_buffer, pwavData->Subchunk2Size, (size_t)1, fp);
+    short *wavedata_buffer;
+    short *temp_buffer = (short*)malloc(pwavData->Subchunk2Size);
+    fread((void*)temp_buffer, pwavData->Subchunk2Size, (size_t)1, fp);
+    short *ori_temp_buffer = temp_buffer;
+    short *ori_wavedata_buffer;
+    if (pwavHeader->NumOfChan == 1){
+      wavedata_buffer = temp_buffer;
+      *pbuffer = wavedata_buffer;
+       *pwavedata_buffer_size = pwavData->Subchunk2Size ;
+    }else if (pwavHeader->NumOfChan == 2){
+      wavedata_buffer = (short*)malloc(pwavData->Subchunk2Size/2);
+      ori_wavedata_buffer  = wavedata_buffer;
+      *pbuffer = wavedata_buffer;  
+      *pwavedata_buffer_size = pwavData->Subchunk2Size/2/sizeof(short);
+      memset(wavedata_buffer,0,*pwavedata_buffer_size);
+      // each sample has 16bit, sample size = pwavedata_buffer_size/2
+      for (int i=0;i< *pwavedata_buffer_size; i++){
+        memcpy(wavedata_buffer, temp_buffer, 2);
+        //because wavedata_buffer++ equal +2 so i < pwavedata_buffer_size/sizeof(short)
+        wavedata_buffer++;
+        temp_buffer+=2;
+      }
+    }else{
+       *pwavedata_buffer_size = 0;
+       *pbuffer = NULL;
+    }
+    
     fclose(fp);
-    *pbuffer = wavedata_buffer;
-    *pwavedata_buffer_size = pwavData->Subchunk2Size / sizeof(short);
+    //printf("pwavedata_buffer_size=%lu\n",*pwavedata_buffer_size);
     return true;
 }
 

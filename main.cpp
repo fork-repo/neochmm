@@ -33,14 +33,18 @@ void update()
 
 }
 
+
+short *datas;
+long datasize;
+
 void draw()
 {
   drawFillRect(pid,0, 0, 600, 500, RGB(0,0,0));
-/*
-  for (int i=0;i< 512;i++){
-    drawLine(pid,i*(600.0/512.0), 0+200, i*(600.0/512.0), (small_data[i]*100)+200, 1, RGB(255,0,255));
+
+  for (int i=0;i< datasize;i++){
+    drawLine(pid,i*(600.0/(datasize)), 0+200, i*(600.0/(datasize)), (datas[i]/32768.0*100)+200, 1, RGB(255,0,255));
   }
-  */
+  
   // for (int i=0;i< val_size;i++){
    // drawLine(pid,i*(600.0/val_size), 0+200, i*(600.0/val_size), (val[i]*100.0/32768.0)+200, 1, RGB(255,0,255));
   //}
@@ -103,25 +107,38 @@ float predit_from_wav(const char* filename, CHMM *pchmm, int fborder)
 
 int main(int argc, char** argv)
 {
+     int fborder = 23;
+   
+    
     char str[256];
     printf("Training:\n----\n");
     //GMM的Mixture 數量不得高於train的data數量?
     int stateNumber = 3;
     int dimensionNumber = 13;
     int mixtureNumber = 4;
-    int fborder = 23;
     CHMM *neochmm = init_audio_chmm("data/yes/yes1.wav", stateNumber, dimensionNumber, mixtureNumber, fborder);
-    for(int i=1;i<=6;i++){
-        sprintf(str, "data/yes/yes%d.wav",i);
+    for(int i=0;i<=10;i++){
+        sprintf(str, "data/train/yes/yes%d.wav",i);
         printf("training %s!\n", str);
         train_from_wav(str, neochmm, fborder);
     }
-    printf("----\nPredict:\n----\n");
-    float prob  =  predit_from_wav("data/yes/yes6.wav", neochmm, fborder);
     printf("----\nSave Model:\n----\n");
     sprintf(str, "chmm.txt");
     printf("save to %s!\n",str);
     neochmm->SaveModel(str);
+    
+    CHMM *read_chmm = new CHMM("chmm.txt");
+   // read_chmm->PrintModel();
+    
+    //printf("----\nPredict:\n----\n");
+    float prob  =  predit_from_wav("data/train/yes/yes100.wav", read_chmm, fborder);
+//    WAVInfo("data/train/yes/yes100.wav");
+//    WAV_HEADER wavOutHeader;
+ //   WAV_DATA wavOutData;
+ //   ReadWAV("data/train/yes/yes1.wav",&datas, &datasize,&wavOutHeader, &wavOutData);
+  //  printf("datasize=%lu\n",datasize);
+   
+     
      //
      WIN *pw =  new WIN();
      Init();

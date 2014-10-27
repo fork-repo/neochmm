@@ -707,3 +707,12 @@ CHMM::CHMM()
 {
 	isInited = false;
 }
+
+CHMM::CHMM(const char* fileName)
+{
+	ifstream chmm_file(fileName);
+    assert(chmm_file);
+    chmm_file>>*this;
+    chmm_file.close();
+	isInited = false;
+}
