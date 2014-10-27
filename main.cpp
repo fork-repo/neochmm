@@ -95,14 +95,17 @@ float predit_from_wav(const char* filename, CHMM *pchmm, int fborder)
     SAMPLES* testSamples = pchmm->ConvertFloatDataToSamples(data, sequence_size, pchmm->GetDimensionNumber());
      int* labels = new int[testSamples->sample_size];
      double p = pchmm->Decode(testSamples,labels);
+    /*
      for(int i=0; i < testSamples->sample_size ; i++){
         printf("%d ", labels[i]);
      }
      printf(": prob=%lf\n",p);
+     */
       for(int i=0;i<sequence_size;i++){
        delete data[i];
     }
     delete data;
+    return p;
 }
 
 int main(int argc, char** argv)
@@ -111,34 +114,59 @@ int main(int argc, char** argv)
    
     
     char str[256];
+    /*
     printf("Training:\n----\n");
     //GMM的Mixture 數量不得高於train的data數量?
-    int stateNumber = 3;
-    int dimensionNumber = 13;
-    int mixtureNumber = 4;
-    CHMM *neochmm = init_audio_chmm("data/yes/yes1.wav", stateNumber, dimensionNumber, mixtureNumber, fborder);
-    for(int i=0;i<=10;i++){
+    CHMM *neochmm = new CHMM(3,13,4);
+    float** data;
+    int sequence_size = readMMFCfromWAV("data/train/yes/yes0.wav",&data,(neochmm->GetDimensionNumber()-1), fborder);
+    SAMPLES* ps = neochmm->ConvertFloatDataToSamples(data, sequence_size, neochmm->GetDimensionNumber());
+    neochmm->InitFromSamples(ps);
+    neochmm->Train(ps,0.1);
+
+    for(int i=0;i<=399;i++){
         sprintf(str, "data/train/yes/yes%d.wav",i);
         printf("training %s!\n", str);
-        train_from_wav(str, neochmm, fborder);
+        sequence_size = readMMFCfromWAV(str,&data,(neochmm->GetDimensionNumber()-1), fborder);
+        ps = neochmm->ConvertFloatDataToSamples(data, sequence_size, neochmm->GetDimensionNumber());
+        neochmm->Train(ps,0.01);
     }
     printf("----\nSave Model:\n----\n");
     sprintf(str, "chmm.txt");
     printf("save to %s!\n",str);
     neochmm->SaveModel(str);
-    
+    */
+
     CHMM *read_chmm = new CHMM("chmm.txt");
    // read_chmm->PrintModel();
     
-    //printf("----\nPredict:\n----\n");
-    float prob  =  predit_from_wav("data/train/yes/yes100.wav", read_chmm, fborder);
-//    WAVInfo("data/train/yes/yes100.wav");
-//    WAV_HEADER wavOutHeader;
- //   WAV_DATA wavOutData;
- //   ReadWAV("data/train/yes/yes1.wav",&datas, &datasize,&wavOutHeader, &wavOutData);
-  //  printf("datasize=%lu\n",datasize);
+    printf("----\nPredict:\n----\n");
+    WAV_HEADER wavOutHeader;
+    WAV_DATA wavOutData;
+    for(int i=1;i<=6;i++){
    
-     
+     sprintf(str, "data/yes/yes%d.wav",i);
+        ReadWAV(str,&datas, &datasize,&wavOutHeader, &wavOutData);
+    //PlayWAV(datas,44100,1500);
+        float prob  =  predit_from_wav(str, read_chmm, fborder);
+        printf("prob=%lf\n",prob);
+    }
+    /*
+    for(int i=0;i<=399;i++){
+        sprintf(str, "data/train/yes/yes%d.wav",100);
+        ReadWAV(str,&datas, &datasize,&wavOutHeader, &wavOutData);
+    //PlayWAV(datas,44100,1500);
+        float prob  =  predit_from_wav(str, read_chmm, fborder);
+        printf("prob=%lf\n",prob);
+    }
+    for(int i=0;i<=399;i++){
+        sprintf(str, "data/train/no/no%d.wav",0);
+        ReadWAV(str,&datas, &datasize,&wavOutHeader, &wavOutData);
+        //PlayWAV(datas,44100,1500);
+        float prob2  =  predit_from_wav(str, read_chmm, fborder);
+        printf("prob2=%lf\n",prob2);
+    }
+    */
      //
      WIN *pw =  new WIN();
      Init();
@@ -147,13 +175,6 @@ int main(int argc, char** argv)
      button2 = CreateButton("button2",200,500,100, 50, pid, buttonclicked2);
      //DisableComponent(button2);
 
-    //short *datas;
-    //long datasize;
-    //WAV_HEADER wavOutHeader;
-    //WAV_DATA wavOutData;
-    //ReadWAV("neo.wav",&datas, &datasize,&wavOutHeader, &wavOutData);
-    //PlayWAV(datas,wavData.Subchunk2Size, 10);
-     
      ShowWindows(pid);
      eventLoop();
      return 0;

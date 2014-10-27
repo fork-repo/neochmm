@@ -38,6 +38,7 @@ public:
 	void SaveModel(const char* filename);
 private:
 	bool isInited;
+	long training_sample_size;
 	int m_stateNumber;      //狀態數目
 	int m_mixtureNumber;
 	int m_dimensionNumber; 

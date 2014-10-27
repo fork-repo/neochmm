@@ -53,10 +53,11 @@ void CHMM::InitFromSamples(SAMPLES* pSamples)
 		delete [] data_for_each_state[i][j];
 		}
 	} 
-	
+	this->training_sample_size = 0;
 	isInited = true;
 
 }
+/*
 void CHMM::InitFromData(float** data, int sequence_size, int dimensionNumber)
 {
 	vector<float*> *data_for_each_state = new vector<float*>[m_stateNumber];
@@ -73,6 +74,8 @@ void CHMM::InitFromData(float** data, int sequence_size, int dimensionNumber)
 	}
 	isInited = true;
 }
+*/
+/*
 void CHMM::InitFromData(const char* fileName)
 {
 	ReadDataBinaryToInitGMMs(fileName);	
@@ -86,6 +89,11 @@ void CHMM::InitFromModel(const char* fileName, CHMM* pchmm)
     read_chmm_file.close();
   	isInited = true;
 }
+*/
+//while (loop){
+//cost += (Decode(pSamples, labels_for_decode));
+//
+//}
 void CHMM::Train(SAMPLES* pSamples, float endError)
 {
 	assert(isInited);
@@ -166,6 +174,8 @@ void CHMM::Train(SAMPLES* pSamples, float endError)
 		float denominator=0;
 		//計算new_pi[]的總和
 		for (int i = 0; i < m_stateNumber; i++){
+			//避免pi太小
+			if (new_pi[i] <= 1) new_pi[i] = 1;
 			denominator += new_pi[i];
 		}
 		//printf("denominator = %lf\n",denominator);
@@ -179,8 +189,9 @@ void CHMM::Train(SAMPLES* pSamples, float endError)
 		for (int i = 0; i < m_stateNumber; i++){
 			printf("%lf ", m_pi[i]);
 		}
-		printf("\n");
 		*/
+		printf("\n");
+		
 		//
 		//更新A
 		for (int i = 0; i < m_stateNumber; i++){
@@ -188,6 +199,7 @@ void CHMM::Train(SAMPLES* pSamples, float endError)
 			// include final state
 			//計算new_A[i][]的總和
 			for (int j = 0; j < m_stateNumber + 1; j++){
+				if (new_A[i][j] <= 1) new_A[i][j] = 1;
 				denominator += new_A[i][j];
 			}
 			if (denominator > 0){
@@ -203,10 +215,14 @@ void CHMM::Train(SAMPLES* pSamples, float endError)
 			loop = false;
 		}
 	}
+	//printf("train_gmm_samples_for_each_state[0].size=%d\n",train_gmm_samples_for_each_state[0].size());
+	//printf("train_gmm_samples_for_each_state[1].size=%d\n",train_gmm_samples_for_each_state[1].size());
+	//printf("train_gmm_samples_for_each_state[2].size=%d\n",train_gmm_samples_for_each_state[2].size());
+	
 	//
 	//printf("finish train, decode again:");
-	 int* plabels = new int[pSamples->sample_size];
-     float p = Decode(pSamples,plabels);
+	 //int* plabels = new int[pSamples->sample_size];
+     //float p = Decode(pSamples,plabels);
      /*
      for(int i=0; i < pSamples->sample_size ; i++){
         printf("%d ", plabels[i]);
@@ -215,9 +231,10 @@ void CHMM::Train(SAMPLES* pSamples, float endError)
      */
      //
 	//PrintModel();
-
+     training_sample_size++;
 
 }
+/*
 void CHMM::Train(const char* fileName, float endError)
 {
 	assert(isInited);
@@ -253,26 +270,26 @@ void CHMM::Train(const char* fileName, float endError)
 			//Decode算出該HMM的成本
 			cost += (Decode(pSamples, labels_for_decode));
 			//cost += LogProbability(Decode(pSamples, labels_for_decode));
-			/*
-			for (int t = 0; t < pSamples->sample_size ;t++){
-	 			printf("%d ", labels_for_decode[t]);
-			}
-			printf("\n");
-			*/
+			//
+			//for (int t = 0; t < pSamples->sample_size ;t++){
+	 		//	printf("%d ", labels_for_decode[t]);
+			//}
+			//printf("\n");
+			
 			//printf("\nc=%lf\n",cost);
 			// separate samples into train_gmm_samples_for_each_state[]
 			for (int i = 0; i < pSamples->sample_size; i++){
 				train_gmm_samples_for_each_state[labels_for_decode[i]].push_back(pSamples->data+(i*pSamples->sample_dimension));
 			}
-			/*
-			printf("\n");
-			for (int i = 0; i < m_stateNumber; i++){
-				for (int j=0;j < train_gmm_samples_for_each_state[i].size();j++){
-					double *v = train_gmm_samples_for_each_state[i][j];
-					printf("[%d][%d]%lf,%lf,%lf\n",i,j,v[0],v[1],v[2]);
-				}
-			}
-			*/
+			
+			//printf("\n");
+			//for (int i = 0; i < m_stateNumber; i++){
+			//	for (int j=0;j < train_gmm_samples_for_each_state[i].size();j++){
+			//		double *v = train_gmm_samples_for_each_state[i][j];
+			//		printf("[%d][%d]%lf,%lf,%lf\n",i,j,v[0],v[1],v[2]);
+			//	}
+			//}
+			
 			memcpy(new_pi,m_pi,sizeof(float) * m_stateNumber);
 			new_pi[labels_for_decode[0]]++;
 			for (int i = 0; i < m_stateNumber; i++){
@@ -307,13 +324,13 @@ void CHMM::Train(const char* fileName, float endError)
 		for (int i = 0; i < m_stateNumber; i++){
 			m_pi[i] = 1.0 * new_pi[i] / denominator;
 		}
-		/*
-		printf("m_pi[]:\n");
-		for (int i = 0; i < m_stateNumber; i++){
-			printf("%lf ", m_pi[i]);
-		}
-		printf("\n");
-		*/
+		
+		//printf("m_pi[]:\n");
+		//for (int i = 0; i < m_stateNumber; i++){
+		//	printf("%lf ", m_pi[i]);
+		//}
+		//printf("\n");
+		
 		//
 		//更新A
 		for (int i = 0; i < m_stateNumber; i++){
@@ -340,15 +357,16 @@ void CHMM::Train(const char* fileName, float endError)
 	//printf("finish train, decode again:");
 	 int* plabels = new int[pSamples->sample_size];
      float p = Decode(pSamples,plabels);
-     /*
-     for(int i=0; i < pSamples->sample_size ; i++){
-        printf("%d ", plabels[i]);
-     }
-     printf(": p=%lf\n",p);
-     */
+     
+     //for(int i=0; i < pSamples->sample_size ; i++){
+     //  printf("%d ", plabels[i]);
+     //}
+     //printf(": p=%lf\n",p);
+     
      //
 	//PrintModel();
 }
+*/
 void CHMM::PrintModel()
 {
 	printf("m_stateNumber:\n");
@@ -399,6 +417,7 @@ void CHMM::PrintModel()
 ostream& operator<<(ostream& out, CHMM& chmm)
 {
 	out << "<CHMM>" << endl;
+	out << "<TRAINING_SAMPLE_SIZE> " << chmm.training_sample_size  << " </TRAINING_SAMPLE_SIZE>" << endl;
 	out << "<StateNumber> " << chmm.m_stateNumber << " </StateNumber>" << endl;
 	out << "<DimensionNumber> " << chmm.m_dimensionNumber << " </DimensionNumber>" << endl;
 	out << "<MixtureNumber> " << chmm.m_mixtureNumber << " </MixtureNumber>" << endl;
@@ -455,7 +474,7 @@ istream& operator>>(istream& in, CHMM& chmm)
 	char label[50];
 	in >> label; // "<CHMM>"
 	assert(strcmp(label, "<CHMM>") == 0);
-	
+	in >> label >> chmm.training_sample_size >> label; // "<TRAINING_SAMPLE_SIZE>"
 	in >> label >> chmm.m_stateNumber >> label; // "<StateNumber>"
 	in >> label >> chmm.m_dimensionNumber >> label; // "<DimensionNumber>"
 	in >> label >> chmm.m_mixtureNumber >> label; // "<MixtureNumber>"
@@ -518,40 +537,56 @@ float CHMM::LogProbability(float prob)
 float CHMM::Decode(SAMPLES* pSamples, int*labels)
 {
 	float* delta = new float[m_stateNumber];
+	memset(delta,0,m_stateNumber);
 	float* previous_delta = new float[m_stateNumber];
+	memset(previous_delta,0,m_stateNumber);
 	int** psi = new int*[pSamples->sample_size];
+	//printf("-----------START------------------------\n");
 	// Init
 	psi[0] = new int[m_stateNumber];
+
 	for (int i = 0; i < m_stateNumber; i++){
 		// pi * C
 		previous_delta[i] = LogProbability(m_pi[i]) + LogProbability(m_gmms[i]->GetProbability(pSamples->data));
-		//printf("p = %lf\n ", LogProbability(m_gmms[i]->GetProbability(pSamples->data)));
+		//printf("previous_delta[%d] = %lf+ %lf\n ", i,LogProbability(m_gmms[i]->GetProbability(pSamples->data)),LogProbability(m_pi[i]));
+		
 		psi[0][i] = -1;
 	}
-	for (int t = 1; t < pSamples->sample_size; t++){
+	for (int t = 1; t < pSamples->sample_size; t++){	
 		psi[t] = new int[m_stateNumber];
 		for (int i = 0; i < m_stateNumber; i++)
 		{
+		   //printf("previous_delta[%d] = %lf\n ", i,previous_delta[i]);
+			
 			// ???? currLogP[i] = -1e308;
-			float maxLogProbability = previous_delta[0] + LogProbability(m_A[0][i]);
-			psi[t][i] = 0;
+			float maxLogProbability = previous_delta[m_stateNumber-1] + LogProbability(m_A[m_stateNumber-1][i]);
+			
+			psi[t][i] = m_stateNumber-1;
 			for (int j = 0; j < m_stateNumber; j++)
 			{
 				//from j to i
 				float temp = previous_delta[j] + LogProbability(m_A[j][i]);
+				//printf("temp= %f, maxLogProbability[%d][%d]=%f,%f \n", temp,j,i,maxLogProbability,LogProbability(m_A[0][i]));
+			
 				if (temp > maxLogProbability)
 				{
+					//printf("new, temp= %f, maxLogProbability[%d][%d]=%f,%f \n", temp,j,i,maxLogProbability,LogProbability(m_A[0][i]));
+					//printf("new maxLogProbability=%f, old=%f\n", temp,maxLogProbability);
 					maxLogProbability = temp;
 					psi[t][i] = j;
+					
 				}
 			}
 			delta[i] = maxLogProbability + LogProbability(m_gmms[i]->GetProbability(pSamples->data+(t*pSamples->sample_dimension)));
 			previous_delta[i] = delta[i];
+			//printf("i=%d,t=%d, %lf, maxLogProbability=%lf,p = %lf, f=%lf\n ", i,t,maxLogProbability,m_gmms[i]->GetProbability(pSamples->data+(t*pSamples->sample_dimension)),LogProbability(m_gmms[i]->GetProbability(pSamples->data+(t*pSamples->sample_dimension))));
+			//printf("delta[%d]=%lf,previous_delta[%d] = %lf\n", i,delta[i],i, previous_delta[i]);
+			
 			//printf("c[%d]=%lf\n",i,delta[i] );
 		}
 	}
 	//計算最後一次的機率即為該seq的decode機率
-	int finalState = 0;
+	int finalState = m_stateNumber-1;
 	float prob = -1e308;
 	for (int i = 0; i < m_stateNumber; i++)
 	{
@@ -567,6 +602,7 @@ float CHMM::Decode(SAMPLES* pSamples, int*labels)
 	for (int t = pSamples->sample_size - 2 ; t >= 0 ; t--){
 	 	labels[t] = psi[t+1][labels[t+1]];
 	}
+	//printf("----------------END-------------------\n");
 	return prob;
 }
 //

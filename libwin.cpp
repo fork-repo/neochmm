@@ -602,7 +602,8 @@ bool OutputWAV(const char* filename, unsigned int record_time)
   return true;
 }
 
-void PlayWAV(short *dwBuffer,long dwBufferLength, int time)
+//time is ms
+void PlayWAV(short *dwBuffer,long SamplesPerSec, int time)
 {
     bool ret;
     WAVEOUTCAPS pwoc;
@@ -619,7 +620,7 @@ void PlayWAV(short *dwBuffer,long dwBufferLength, int time)
     //8bit跟16bit的取樣
     waveform.wBitsPerSample  = 16 ;
     //11025跟22050
-    waveform.nSamplesPerSec  = 22050 ;
+    waveform.nSamplesPerSec  = 44100 ;                    
     //nBlockAlign = nChannels * wBitsPerSample/8
     waveform.nBlockAlign     = waveform.nChannels * waveform.wBitsPerSample / 8;
     //nAvgBytesPerSec = nSamplesPerSec * nChannels * wBitsPerSample/8
@@ -633,6 +634,7 @@ void PlayWAV(short *dwBuffer,long dwBufferLength, int time)
       return;
     }
     //
+    long dwBufferLength = time/1000.0 * SamplesPerSec;
     WAVEHDR WaveOutHdr;
     WaveOutHdr.lpData =(HPSTR)dwBuffer;
     WaveOutHdr.dwBufferLength = dwBufferLength;
@@ -649,8 +651,8 @@ void PlayWAV(short *dwBuffer,long dwBufferLength, int time)
       printf("waveOutWrite fail!\n");
       return;
     }
-    Sleep(time*1000);
-    printf("ret=%d\n",ret);
+    Sleep(time);
+   // printf("ret=%d\n",ret);
     waveOutReset(hWaveOut);
     waveOutClose(hWaveOut);
 }
